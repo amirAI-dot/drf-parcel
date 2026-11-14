@@ -328,7 +328,7 @@ class DomainError(APIException):
   raise شود به زبان پیش‌فرض است.
 
 کتابخانه خطاهای رایج را همراه خودش دارد - `InvalidInputError`،
-`AuthenticationFailedError`، `PermissionDeniedError`، `NotFoundError`،
+`InvalidCursorError`، `AuthenticationFailedError`، `PermissionDeniedError`، `NotFoundError`،
 `ConflictError`، `RateLimitedError`، `ServiceUnavailableError`.
 
 **خطاهای فعلی پروژه همچنان کار می‌کنند.** هر زیرکلاس `APIException` در DRF،

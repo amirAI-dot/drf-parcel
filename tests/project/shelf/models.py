@@ -12,3 +12,12 @@ class Item(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class Tag(models.Model):
+    """A name that may be held once - for a unique constraint the database keeps."""
+
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self) -> str:
+        return self.name

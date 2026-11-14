@@ -25,22 +25,14 @@ from typing import Any
 from urllib import parse
 
 from django.db.models import QuerySet
-from django.utils.translation import gettext_lazy as _
-from rest_framework import pagination, status
-from rest_framework.exceptions import APIException, NotFound
+from rest_framework import pagination
+from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
 from drf_parcel import conf
+from drf_parcel.exceptions import InvalidCursorError
 from drf_parcel.responses import EnvelopeResponse, success_response
-
-
-class InvalidCursor(APIException):
-    """A cursor the server cannot read: the client sent back something it was never given."""
-
-    status_code = status.HTTP_400_BAD_REQUEST
-    default_code = 'invalid_cursor'
-    default_detail = _('The cursor is not valid.')
 
 
 class _PageSize:
@@ -164,7 +156,7 @@ class CursorPagination(_PageSize, pagination.CursorPagination):
         try:
             return super().decode_cursor(request)
         except NotFound as unreadable:
-            raise InvalidCursor from unreadable
+            raise InvalidCursorError from unreadable
 
     def get_paginated_response(self, data: Any) -> EnvelopeResponse:
         return success_response(data, pagination=self.pagination_meta())

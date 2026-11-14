@@ -39,6 +39,7 @@ REST_FRAMEWORK: dict[str, object] = {
     'DEFAULT_PERMISSION_CLASSES': [],
     'UNAUTHENTICATED_USER': None,
     'DEFAULT_PAGINATION_CLASS': 'drf_parcel.pagination.PageNumberPagination',
+    'EXCEPTION_HANDLER': 'drf_parcel.handlers.exception_handler',
 }
 
 _DATABASES = {
