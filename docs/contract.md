@@ -1,9 +1,9 @@
 # The contract
 
-> **Status: draft, for the owner to decide.** Every shape that leaves the
-> server, every error code, and every setting. The code follows this
-> document; a change to what a client receives is a change here first.
-> The questions still open are listed at the end.
+> **Status: decided.** Every shape that leaves the server, every error
+> code, and every setting. The code follows this document; a change to what
+> a client receives is a change here first. The questions it was decided
+> on, and what was decided, are at the end.
 >
 > Persian: [`contract.fa.md`](contract.fa.md).
 
@@ -383,14 +383,14 @@ write behind an error.
 
 ### 3.7 Outside DRF
 
-The handler covers what reaches a DRF view. An address matching no URL
-never does. Two optional views answer those in the envelope too:
+The library shapes what DRF answers, and nothing else. A request that never
+reaches a DRF view - an address matching no URL, a failure in a middleware
+before the view - is Django's to answer, with the project's own
+`handler404` and `handler500`, and is outside this library.
 
-```python
-handler404 = 'drf_parcel.views.not_found'
-handler500 = 'drf_parcel.views.server_error'
-```
-
+That is deliberate: those handlers are the whole project's - its admin site
+and its web pages too - not the API's, and a library for DRF does not
+reach into them.
 ---
 
 ## 4. Using it
@@ -498,9 +498,9 @@ language in its own catalogue.
 
 ---
 
-## 8. Open questions
+## 8. Decisions
 
-For the owner to decide before stage 1.
+What was asked before stage 1, and what the owner decided.
 
 1. ~~One code for a failed sign-in, or two?~~ **Decided: two**, DRF's own
    codes - `not_authenticated` (none sent) and `authentication_failed`
@@ -517,4 +517,6 @@ For the owner to decide before stage 1.
    "Created." on a 201, "Saved." on `PUT`/`PATCH`, "Deleted." on `DELETE`,
    "Done." otherwise - replaced per answer, per view, or for the project
    with `MESSAGES` (1).
-5. **`handler404` and `handler500`** (3.7): in the first release, or later?
+5. ~~`handler404` and `handler500`: in the first release, or later?~~
+   **Decided: neither.** What never reaches DRF is not this library's
+   (3.7).
