@@ -5,7 +5,7 @@
 > a client receives is a change here first. The questions it was decided
 > on, and what was decided, are at the end.
 >
-> Persian: [`contract.fa.md`](contract.fa.md).
+> Persian: [`contract.fa.md`](https://github.com/amirAI-dot/drf-parcel/blob/main/docs/contract.fa.md).
 
 ---
 
@@ -384,7 +384,7 @@ Every failure answered marks the request's transaction for rollback
 (`set_rollback`), so a project with `ATOMIC_REQUESTS` never keeps half a
 write behind an error.
 
-### 3.7 Outside DRF
+### 3.7 Outside DRF { #outside-drf }
 
 The library shapes what DRF answers, and nothing else. A request that never
 reaches a DRF view - an address matching no URL, a failure in a middleware

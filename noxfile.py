@@ -9,6 +9,8 @@ Every check the project runs, defined once - locally and in CI alike.
     nox -s oldest                            the oldest release of everything supported
     nox -s messages                          the catalogues compiled, .po to .mo
     nox -s package                           the built wheel installs, and the example runs on it
+    nox -s docs                              the documentation site builds, every link found
+    nox -s docs -- serve                     the site, at http://127.0.0.1:8000, as it is written
 
 CI runs these same sessions, built from the same table, so a check that
 passes here passes there and a supported version cannot be left out of one.
@@ -143,3 +145,19 @@ def package(session: nox.Session) -> None:
             os.devnull,
         )
         session.run('python', 'manage.py', 'test', '--noinput')
+
+
+@nox.session(python=NEWEST_PYTHON)
+def docs(session: nox.Session) -> None:
+    """
+    The documentation site builds with no warning - a link, an anchor or an
+    included example it cannot find fails it. ``nox -s docs -- serve`` shows it
+    at http://127.0.0.1:8000 while it is written.
+    """
+    session.install('-e', '.[schema]', '--group', 'docs')
+    session.env['NO_MKDOCS_2_WARNING'] = '1'
+
+    if session.posargs[:1] == ['serve']:
+        session.run('mkdocs', 'serve', *session.posargs[1:])
+    else:
+        session.run('mkdocs', 'build', '--strict', *session.posargs)

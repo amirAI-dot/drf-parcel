@@ -36,6 +36,7 @@ classifiers = [
 schema = ["drf-spectacular>=0.28"]
 
 [project.urls]
+Documentation = "https://amirai-dot.github.io/drf-parcel/"
 Repository = "https://github.com/amirAI-dot/drf-parcel"
 Changelog = "https://github.com/amirAI-dot/drf-parcel/blob/main/CHANGELOG.md"
 Contract = "https://github.com/amirAI-dot/drf-parcel/blob/main/docs/contract.md"
@@ -48,6 +49,7 @@ test = [
     "psycopg[binary]>=3.2",
 ]
 lint = ["ruff>=0.15"]
+docs = ["mkdocs-material>=9.6", "mkdocs-static-i18n>=1.3", "mkdocstrings[python]>=0.29"]
 types = [
     "mypy>=1.15",
     "django-stubs>=5.2",

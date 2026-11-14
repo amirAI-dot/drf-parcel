@@ -15,6 +15,10 @@ A client reads one shape and never special-cases a payload: the answer is
 under `data`, a person reads `message`, and code branches on `error_code` -
 never on the message, which is translated.
 
+**[The documentation](https://amirai-dot.github.io/drf-parcel/)** - a
+quickstart, a tutorial, how-to guides, the reference - in English and
+Persian.
+
 ## In a project
 
 ```bash

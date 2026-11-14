@@ -4,7 +4,7 @@
 
 ## Unreleased - the first release
 
-Everything [the contract](docs/contract.md) says, built.
+Everything [the contract](https://github.com/amirAI-dot/drf-parcel/blob/main/docs/contract.md) says, built.
 
 * **The envelope** - `success`, `status_code`, `message` and `data` on every
   answer; `pagination` on a paged list; `error_code` on a failure. Built in

@@ -5,7 +5,7 @@
 > می‌رسد، اول اینجا تغییر می‌کند. سؤال‌هایی که بر اساسشان تصمیم گرفته شد،
 > و تصمیم هر کدام، در انتها آمده‌اند.
 >
-> English: [`contract.md`](contract.md).
+> English: [`contract.md`](https://github.com/amirAI-dot/drf-parcel/blob/main/docs/contract.md).
 
 پیام‌های نمونه‌ی زیر به انگلیسی نوشته شده‌اند؛ در عمل هر پیام به زبان
 درخواست (`Accept-Language`) گفته می‌شود.
@@ -386,7 +386,7 @@ class DomainError(APIException):
 (`set_rollback`)، تا پروژه‌ای که `ATOMIC_REQUESTS` دارد هرگز نیمی از یک
 نوشتن را پشت یک خطا نگه ندارد.
 
-### ۳.۷ بیرون از DRF
+### ۳.۷ بیرون از DRF { #outside-drf }
 
 کتابخانه به پاسخی که DRF می‌دهد شکل می‌دهد، و نه به چیز دیگری. درخواستی که
 هیچ‌وقت به یک view در DRF نمی‌رسد - آدرسی که با هیچ URLی جور نیست، خطایی در
