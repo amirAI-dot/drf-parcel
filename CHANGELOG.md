@@ -2,7 +2,9 @@
 
 [فارسی](CHANGELOG.fa.md)
 
-## Unreleased - the first release
+## Unreleased
+
+## 0.1.0 - 2026-11-14 - the first release
 
 Everything [the contract](https://github.com/amirAI-dot/drf-parcel/blob/main/docs/contract.md) says, built.
 
