@@ -81,3 +81,20 @@ def test_a_paginator_sets_the_size_its_view_does_not(
     make_items(30)
 
     assert client.get('/items/four/').json()['pagination']['page_size'] == 4
+
+
+@override_settings(REST_FRAMEWORK={'PAGE_SIZE': 7})
+def test_drfs_own_page_size_is_kept_when_the_library_is_not_told_one(
+    client: APIClient, make_items: MakeItems
+) -> None:
+    """A project that set REST_FRAMEWORK['PAGE_SIZE'] keeps its size when it adopts the library."""
+    make_items(30)
+
+    assert client.get('/items/').json()['pagination']['page_size'] == 7
+
+
+@override_settings(REST_FRAMEWORK={'PAGE_SIZE': 7}, DRF_PARCEL={'PAGE_SIZE': 10})
+def test_the_librarys_page_size_wins_over_drfs(client: APIClient, make_items: MakeItems) -> None:
+    make_items(30)
+
+    assert client.get('/items/').json()['pagination']['page_size'] == 10

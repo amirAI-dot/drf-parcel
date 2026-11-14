@@ -65,3 +65,11 @@ def test_the_check_runs_with_the_projects_checks() -> None:
 
     with override_settings(DRF_PARCEL={'PAGE_SIZE': 50, 'MAX_PAGE_SIZE': 10}):
         assert 'drf_parcel.E003' in ids(run_checks())  # type: ignore[arg-type]
+
+
+@override_settings(REST_FRAMEWORK={'PAGE_SIZE': 500})
+def test_drfs_own_page_size_above_the_ceiling() -> None:
+    problems = check_settings()
+
+    assert ids(problems) == ['drf_parcel.E003']
+    assert '(500)' in problems[0].msg

@@ -23,6 +23,7 @@ from typing import Final
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from rest_framework.settings import api_settings
 
 #: Every key the setting may hold, and what it is when left out.
 DEFAULTS: Final[Mapping[str, object]] = MappingProxyType(
@@ -66,6 +67,25 @@ def raw() -> Mapping[str, object]:
 def get(key: str) -> object:
     """One key of the setting, or its default when the project left it out."""
     return raw().get(key, DEFAULTS[key])
+
+
+def page_size() -> object:
+    """
+    The page size when a view names none.
+
+    ``DRF_PARCEL['PAGE_SIZE']`` when the project wrote it; else DRF's own
+    ``PAGE_SIZE``, so a project that already set it there keeps its size when
+    it adopts the library; else the library's default.
+    """
+    written = raw()
+
+    if 'PAGE_SIZE' in written:
+        return written['PAGE_SIZE']
+
+    if api_settings.PAGE_SIZE is not None:
+        return api_settings.PAGE_SIZE
+
+    return DEFAULTS['PAGE_SIZE']
 
 
 def messages() -> Mapping[str, object]:

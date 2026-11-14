@@ -30,14 +30,19 @@ def check_settings(
 
 def _page_size_problems() -> list[CheckMessage]:
     problems: list[CheckMessage] = []
-    page_size = conf.get('PAGE_SIZE')
+    page_size = conf.page_size()
     ceiling = conf.get('MAX_PAGE_SIZE')
 
-    for name, value in (('PAGE_SIZE', page_size), ('MAX_PAGE_SIZE', ceiling)):
+    # The page size may be DRF's own PAGE_SIZE, so it is named by what it is.
+    for name, value in (
+        ('The page size', page_size),
+        ("DRF_PARCEL['MAX_PAGE_SIZE']", ceiling),
+    ):
         if not _is_positive_whole_number(value):
             problems.append(
                 Error(
-                    f"DRF_PARCEL['{name}'] must be a whole number above zero, not {value!r}.",
+                    f'{name} must be a whole number above zero, not {value!r}.',
+                    hint="It is DRF_PARCEL['PAGE_SIZE'], else REST_FRAMEWORK['PAGE_SIZE'].",
                     id='drf_parcel.E002',
                 )
             )
@@ -45,8 +50,7 @@ def _page_size_problems() -> list[CheckMessage]:
     if not problems and ceiling < page_size:  # type: ignore[operator]
         problems.append(
             Error(
-                f"DRF_PARCEL['MAX_PAGE_SIZE'] ({ceiling}) is below "
-                f"DRF_PARCEL['PAGE_SIZE'] ({page_size}).",
+                f"DRF_PARCEL['MAX_PAGE_SIZE'] ({ceiling}) is below the page size ({page_size}).",
                 hint='The ceiling on a size the client chooses cannot be below the default size.',
                 id='drf_parcel.E003',
             )

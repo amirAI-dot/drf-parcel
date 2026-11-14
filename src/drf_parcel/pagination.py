@@ -12,7 +12,7 @@ reads either without guessing::
                    "page_size": 20, "has_next": true, "has_previous": false}
 
 The page size is read from the view, then the paginator, then
-``DRF_PARCEL['PAGE_SIZE']``. A client may choose it only where that is
+``DRF_PARCEL['PAGE_SIZE']``, then DRF's own ``PAGE_SIZE``. A client may choose it only where that is
 allowed - ``client_page_size`` on the view or the paginator, or
 ``DRF_PARCEL['CLIENT_PAGE_SIZE']`` - and always under a ceiling: without
 one, ``?page_size=1000000`` is a request to read a whole table, open to
@@ -59,7 +59,7 @@ class _PageSize:
     view: APIView | None = None
 
     def _setting(self, name: str) -> Any:
-        """One of the three, from the view, the paginator, or ``DRF_PARCEL``."""
+        """One of the three, from the view, the paginator, or the project."""
         from_view = getattr(self.view, name, None)
 
         if from_view is not None:
@@ -69,6 +69,9 @@ class _PageSize:
 
         if from_paginator is not None:
             return from_paginator
+
+        if name == 'page_size':
+            return conf.page_size()
 
         return conf.get(name.upper())
 
