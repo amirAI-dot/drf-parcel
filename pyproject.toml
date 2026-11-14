@@ -64,7 +64,7 @@ dev = [
 packages = ["src/drf_parcel"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "docs", "LICENSE", "README.md", "README.fa.md", "CHANGELOG.md", "CHANGELOG.fa.md"]
+include = ["src", "tests", "docs", "example", "LICENSE", "README.md", "README.fa.md", "CHANGELOG.md", "CHANGELOG.fa.md"]
 
 # ---------------------------------------------------------------- tests
 
@@ -91,7 +91,7 @@ fail_under = 100
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-src = ["src", "tests"]
+src = ["src", "tests", "example"]
 # The documents' examples are prose, laid out for reading rather than formatted.
 extend-exclude = ["*.md"]
 
@@ -112,8 +112,13 @@ select = [
     "RUF",      # ruff's own rules
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# The example is written as a project writes it: Django's TestCase, and plain
+# dictionaries on views.
+"example/**" = ["PT009", "PT027", "RUF012"]
+
 [tool.ruff.lint.isort]
-known-first-party = ["drf_parcel", "tests"]
+known-first-party = ["drf_parcel", "tests", "shop", "config"]
 
 [tool.ruff.format]
 quote-style = "single"
