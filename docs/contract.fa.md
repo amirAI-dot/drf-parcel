@@ -208,7 +208,7 @@ cursorی که سرور نتواند بخواند **400** (`invalid_cursor`) اس
 {
   "success": false,
   "status_code": 400,
-  "error_code": "validation_failed",
+  "error_code": "validation_error",
   "message": "Enter a valid phone number.",
   "data": {
     "fields": {
@@ -237,7 +237,7 @@ cursorی که سرور نتواند بخواند **400** (`invalid_cursor`) اس
 
 | وضعیت | `error_code` | از کجا | `data` |
 |---|---|---|---|
-| 400 | `validation_failed` | serializer، یا `ValidationError` خود Django | `fields` |
+| 400 | `validation_error` | serializer، یا `ValidationError` خود Django | `fields` |
 | 400 | `parse_error` | بدنه‌ای که JSON معتبر نیست | `{}` |
 | 400 | `invalid_cursor` | cursorی که سرور نمی‌تواند بخواند | `{}` |
 | 401 | `not_authenticated` | اطلاعات ورود فرستاده نشده | `{}` |
@@ -246,7 +246,8 @@ cursorی که سرور نتواند بخواند **400** (`invalid_cursor`) اس
 | 404 | `not_found` | `NotFound`، یا `Http404` خود Django | `{}` |
 | 405 | `method_not_allowed` | متدی که view ندارد | `{}` |
 | 406 | `not_acceptable` | `Accept`ی که کسی جوابش را ندارد | `{}` |
-| 409 | `conflict` | `IntegrityError`، وقتی روشن باشد (۳.۵) | `{}` |
+| 409 | `already_exists` | `IntegrityError` از نوع unique، وقتی روشن باشد (۳.۵) | `{}` |
+| 409 | `conflict` | `IntegrityError` از نوع foreign key، وقتی روشن باشد (۳.۵) | `{}` |
 | 415 | `unsupported_media_type` | نوع بدنه‌ای که view نمی‌خواند | `{}` |
 | 429 | `rate_limited` | محدودیت تعداد درخواست | `retry_after`، به ثانیه |
 | 500 | `internal_error` | هر چیزی که کسی طراحی‌اش نکرده | `{}` |
@@ -301,7 +302,7 @@ class DomainError(APIException):
   می‌کند - داخل یک درخواست، به زبان همان درخواست. خطایی که بیرون از درخواست
   raise شود به زبان پیش‌فرض است.
 
-کتابخانه خطاهای رایج را همراه خودش دارد - `ValidationFailedError`،
+کتابخانه خطاهای رایج را همراه خودش دارد - `InvalidInputError`،
 `AuthenticationFailedError`، `PermissionDeniedError`، `NotFoundError`،
 `ConflictError`، `RateLimitedError`، `ServiceUnavailableError`.
 
@@ -324,10 +325,32 @@ class DomainError(APIException):
 
 ### ۳.۵ یکپارچگی دیتابیس
 
-به‌طور پیش‌فرض خاموش. رسیدن خطای unique یا not-null به view یعنی قانونی که
-serializer یا سرویس باید می‌گفت جا افتاده است. پروژه‌ای که تور ایمنی
-می‌خواهد `HANDLE_INTEGRITY_ERRORS` را روشن می‌کند: آن وقت این خطا با 409
-`conflict` و یک جمله‌ی عمومی جواب داده می‌شود، و هرگز با متن دیتابیس.
+به‌طور پیش‌فرض خاموش. قیدی که دیتابیس رد می‌کند معمولاً زودتر، در serializer
+یا سرویس، گرفته شده است؛ این یک تور ایمنی است که با `HANDLE_INTEGRITY_ERRORS`
+روشن می‌شود.
+
+نوع قید از کدی خوانده می‌شود که درایور دیتابیس گزارش می‌دهد - هرگز از متن
+خطا، که با دیتابیس، نسخه و زبانش عوض می‌شود:
+
+| قید | PostgreSQL `sqlstate` | SQLite `sqlite_errorcode` | MySQL `errno` |
+|---|---|---|---|
+| unique | `23505` | `2067`، `1555` | `1062` |
+| foreign key | `23503` | `787` | `1451`، `1452` |
+| not null | `23502` | `1299` | `1048` |
+| check | `23514` | `275` | `3819` |
+
+| قید | جواب | چرا |
+|---|---|---|
+| unique | 409 `already_exists` | دو درخواست همزمان: ورودی درست بود، و بین بررسی و نوشتن، ردیف گرفته شد |
+| foreign key | 409 `conflict` | ردیفی که به آن اشاره شده در همین فاصله حذف یا عوض شده |
+| not null | 500 `internal_error` | قانونی که serializer باید می‌گفت جا افتاده - باگ است، و کاربر نمی‌تواند درستش کند |
+| check | 500 `internal_error` | همان |
+| کدی که شناخته نیست | 500 `internal_error` | ناشناخته یعنی رد |
+
+500 اینجا مثل هر 500 دیگری است (۳.۴): با traceback لاگ می‌شود، گزارش می‌شود،
+و در `DEBUG` بالا می‌رود - باگی پیدا شده است. پیام همیشه یک جمله‌ی عمومی و
+ترجمه‌شده است: نه متن دیتابیس، نه اسم قید و نه اسم ستون از سرور بیرون
+نمی‌رود. اینکه کدام فیلد تکراری است را serializer باید بگوید.
 
 ### ۳.۶ تراکنش
 
@@ -413,7 +436,7 @@ DRF_PARCEL = {
 | `PAGE_SIZE_QUERY_PARAM` | `'page_size'` | اسم پارامتری که با آن انتخاب می‌کند |
 | `FIELD_ERRORS` | `'detailed'` | `'detailed'`: برای هر مشکل `{code, message}`؛ `'messages'`: فقط متن، شکل خود DRF |
 | `FIELD_PATH_SEPARATOR` | `'.'` | مسیر فیلد تودرتو با چه چیزی وصل شود |
-| `ERROR_CODES` | `{}` | تغییر اسم یک کد استاندارد: `{'validation_failed': 'validation_error'}` |
+| `ERROR_CODES` | `{}` | تغییر اسم یک کد استاندارد: `{'validation_error': 'validation_failed'}` |
 | `HANDLE_INTEGRITY_ERRORS` | `False` | بخش ۳.۵ |
 | `RAISE_UNHANDLED_IN_DEBUG` | `True` | بخش ۳.۴ |
 | `REPORTER` | `None` | مسیر تابعی که با هر 500 صدا زده می‌شود |
@@ -454,14 +477,17 @@ DRF_PARCEL = {
 
 برای تصمیم مالک پروژه، پیش از مرحله‌ی ۱.
 
-1. **`not_authenticated` و `authentication_failed`** اینجا دو کد هستند
-   (اطلاعات ورود نیست، اطلاعات ورود اشتباه است). DayarDarman اولی را
-   `authentication_required` می‌نامد؛ Elin و Hilacare برای هر دو یک کد
-   می‌فرستند، `authentication_error`. کدام؟
-2. **`validation_failed`** (DayarDarman) یا **`validation_error`** (Elin،
-   Hilacare، Idehsaz)؟
-3. **`IntegrityError`**: همین 409 `conflict`، یا 400 همان‌طور که Elin و
-   Hilacare امروز جواب می‌دهند؟
+1. ~~یک کد برای خطای ورود یا دو کد؟~~ **تصمیم: دو کد**، همان کدهای خود
+   DRF - `not_authenticated` (فرستاده نشده) و `authentication_failed`
+   (اشتباه یا منقضی). کلاینت روی دومی نشست را تمدید می‌کند و فقط روی اولی
+   کاربر را به صفحه‌ی ورود می‌برد.
+2. ~~`validation_failed` یا `validation_error`؟~~ **تصمیم:
+   `validation_error`** - همان چیزی که کلاینت سه پروژه از چهار پروژه همین
+   الان می‌خواند، و کتابخانه‌های مشابه هم همین را می‌گویند. کد خود DRF،
+   `invalid`، کد فیلدها هم هست، پس استفاده نمی‌شود. اسم کلاس کتابخانه
+   `InvalidInputError` است.
+3. ~~`IntegrityError`: 409 یا 400؟~~ **تصمیم: بر اساس نوع قید**، که از کد
+   درایور خوانده می‌شود (۳.۵).
 4. **پیام‌های پیش‌فرض**: «Done.» برای هر موفقیت (DayarDarman)، یا یکی برای
    هر اکشن - «Created.»، «Deleted.»، «List retrieved.» (Elin، Hilacare)؟
 5. **`handler404` و `handler500`** (۳.۷): در اولین نسخه، یا بعداً؟

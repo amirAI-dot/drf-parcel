@@ -205,7 +205,7 @@ The first problem in `message`, every problem in `data.fields`:
 {
   "success": false,
   "status_code": 400,
-  "error_code": "validation_failed",
+  "error_code": "validation_error",
   "message": "Enter a valid phone number.",
   "data": {
     "fields": {
@@ -234,7 +234,7 @@ The first problem in `message`, every problem in `data.fields`:
 
 | status | `error_code` | raised by | `data` |
 |---|---|---|---|
-| 400 | `validation_failed` | a serializer, a Django `ValidationError` | `fields` |
+| 400 | `validation_error` | a serializer, a Django `ValidationError` | `fields` |
 | 400 | `parse_error` | a body that is not valid JSON | `{}` |
 | 400 | `invalid_cursor` | a cursor the server cannot read | `{}` |
 | 401 | `not_authenticated` | no credentials | `{}` |
@@ -243,7 +243,8 @@ The first problem in `message`, every problem in `data.fields`:
 | 404 | `not_found` | `NotFound`, Django's `Http404` | `{}` |
 | 405 | `method_not_allowed` | a method the view has not got | `{}` |
 | 406 | `not_acceptable` | an `Accept` nobody can answer | `{}` |
-| 409 | `conflict` | `IntegrityError`, when turned on (3.5) | `{}` |
+| 409 | `already_exists` | a unique `IntegrityError`, when turned on (3.5) | `{}` |
+| 409 | `conflict` | a foreign-key `IntegrityError`, when turned on (3.5) | `{}` |
 | 415 | `unsupported_media_type` | a body type the view does not read | `{}` |
 | 429 | `rate_limited` | throttling | `retry_after`, in seconds |
 | 500 | `internal_error` | anything nobody designed | `{}` |
@@ -297,7 +298,7 @@ class DomainError(APIException):
   request's language inside a request. One raised outside a request is in
   the default language.
 
-The library ships the common ones - `ValidationFailedError`,
+The library ships the common ones - `InvalidInputError`,
 `AuthenticationFailedError`, `PermissionDeniedError`, `NotFoundError`,
 `ConflictError`, `RateLimitedError`, `ServiceUnavailableError`.
 
@@ -320,11 +321,34 @@ A 404 or a wrong phone number is not logged as an error at all.
 
 ### 3.5 Database integrity
 
-Off by default. A unique or not-null violation reaching the view means a
-rule the serializer or the service should have stated is missing. A
-project that wants a safety net turns on `HANDLE_INTEGRITY_ERRORS`: the
-violation then answers 409 `conflict` with a generic sentence, never the
-database's text.
+Off by default. A constraint the database refuses was normally caught
+earlier, by the serializer or the service; this is a safety net, turned on
+with `HANDLE_INTEGRITY_ERRORS`.
+
+The kind of constraint is read from the code the database driver reports -
+never from its text, which changes with the database, its version and its
+language:
+
+| constraint | PostgreSQL `sqlstate` | SQLite `sqlite_errorcode` | MySQL `errno` |
+|---|---|---|---|
+| unique | `23505` | `2067`, `1555` | `1062` |
+| foreign key | `23503` | `787` | `1451`, `1452` |
+| not null | `23502` | `1299` | `1048` |
+| check | `23514` | `275` | `3819` |
+
+| constraint | answer | why |
+|---|---|---|
+| unique | 409 `already_exists` | two requests at once: the input was right, and the row was taken between the check and the write |
+| foreign key | 409 `conflict` | the row it points at was deleted or changed in between |
+| not null | 500 `internal_error` | a rule the serializer should have stated is missing - a bug, which the person cannot fix |
+| check | 500 `internal_error` | the same |
+| a code not known | 500 `internal_error` | unknown is refused |
+
+A 500 here is every 500 (3.4): logged with its traceback, reported, raised
+under `DEBUG` - a bug has been found. The message is always a generic,
+translated sentence: neither the database's text nor a constraint's or a
+column's name leaves the server. Which field was taken is the
+serializer's to say.
 
 ### 3.6 The transaction
 
@@ -410,7 +434,7 @@ DRF_PARCEL = {
 | `PAGE_SIZE_QUERY_PARAM` | `'page_size'` | the parameter it chooses it with |
 | `FIELD_ERRORS` | `'detailed'` | `'detailed'`: `{code, message}` per problem; `'messages'`: the text alone, DRF's shape |
 | `FIELD_PATH_SEPARATOR` | `'.'` | how a nested field's path is joined |
-| `ERROR_CODES` | `{}` | a standard code renamed: `{'validation_failed': 'validation_error'}` |
+| `ERROR_CODES` | `{}` | a standard code renamed: `{'validation_error': 'validation_failed'}` |
 | `HANDLE_INTEGRITY_ERRORS` | `False` | 3.5 |
 | `RAISE_UNHANDLED_IN_DEBUG` | `True` | 3.4 |
 | `REPORTER` | `None` | a dotted path to a function called with each 500 |
@@ -451,14 +475,17 @@ language in its own catalogue.
 
 For the owner to decide before stage 1.
 
-1. **`not_authenticated` and `authentication_failed`** are two codes here
-   (no credentials, wrong credentials). DayarDarman calls the first
-   `authentication_required`; Elin and Hilacare send one code for both,
-   `authentication_error`. Which?
-2. **`validation_failed`** (DayarDarman) or **`validation_error`** (Elin,
-   Hilacare, Idehsaz)?
-3. **`IntegrityError`**: 409 `conflict` as here, or 400 as Elin and
-   Hilacare answer today?
+1. ~~One code for a failed sign-in, or two?~~ **Decided: two**, DRF's own
+   codes - `not_authenticated` (none sent) and `authentication_failed`
+   (wrong or expired). A client renews a session on the second and only
+   signs the person in on the first.
+2. ~~`validation_failed` or `validation_error`?~~ **Decided:
+   `validation_error`** - what three of the four projects' clients already
+   read, and what the similar libraries say. DRF's own code, `invalid`, is
+   also a field's code, so it is not used. The library's class is
+   `InvalidInputError`.
+3. ~~`IntegrityError`: 409 or 400?~~ **Decided: by the kind of constraint**,
+   read from the driver's code (3.5).
 4. **Default messages**: "Done." for every success (DayarDarman), or one per
    action - "Created.", "Deleted.", "List retrieved." (Elin, Hilacare)?
 5. **`handler404` and `handler500`** (3.7): in the first release, or later?
