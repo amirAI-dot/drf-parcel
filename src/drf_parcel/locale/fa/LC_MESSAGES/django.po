@@ -1,0 +1,79 @@
+# The Persian catalogue of drf-parcel.
+# This file is distributed under the same license as the drf-parcel package.
+msgid ""
+msgstr ""
+"Project-Id-Version: drf-parcel\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: fa\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: apps.py
+msgid "Response envelope"
+msgstr "قالب پاسخ"
+
+#: exceptions.py
+msgid "The request could not be completed."
+msgstr "درخواست انجام نشد."
+
+#: exceptions.py handlers.py
+msgid "Some of the information provided is not valid."
+msgstr "بعضی از اطلاعات واردشده معتبر نیست."
+
+#: exceptions.py
+msgid "The cursor is not valid."
+msgstr "نشانگر صفحه معتبر نیست."
+
+#: exceptions.py
+msgid "Sign in again to continue."
+msgstr "برای ادامه دوباره وارد شوید."
+
+#: exceptions.py
+msgid "You do not have permission to do this."
+msgstr "اجازه‌ی انجام این کار را ندارید."
+
+#: exceptions.py
+msgid "It was not found."
+msgstr "پیدا نشد."
+
+#: exceptions.py
+msgid "This conflicts with a change made in the meantime."
+msgstr "این کار با تغییری که در این فاصله انجام شده در تعارض است."
+
+#: exceptions.py
+msgid "Too many attempts. Please wait and try again."
+msgstr "تعداد تلاش‌ها بیش از حد است. لطفاً کمی صبر کنید و دوباره امتحان کنید."
+
+#: exceptions.py
+msgid "This service is not available right now. Please try again later."
+msgstr "این سرویس در حال حاضر در دسترس نیست. لطفاً بعداً دوباره امتحان کنید."
+
+#: handlers.py
+msgid "This already exists."
+msgstr "این مورد از قبل وجود دارد."
+
+#: handlers.py
+msgid "This was changed in the meantime. Please try again."
+msgstr "این مورد در این فاصله تغییر کرده است. لطفاً دوباره امتحان کنید."
+
+#: handlers.py
+msgid "Something went wrong. Please try again."
+msgstr "مشکلی پیش آمد. لطفاً دوباره امتحان کنید."
+
+#: messages.py
+msgid "Created."
+msgstr "ساخته شد."
+
+#: messages.py
+msgid "Saved."
+msgstr "ذخیره شد."
+
+#: messages.py
+msgid "Deleted."
+msgstr "حذف شد."
+
+#: messages.py
+msgid "Done."
+msgstr "انجام شد."

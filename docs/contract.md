@@ -479,11 +479,27 @@ does not import, a code in `ERROR_CODES` the library does not have.
 With the `schema` extra (`pip install 'drf-parcel[schema]'`), the generated
 OpenAPI document says what the wire carries:
 
-* every 2xx answer inside the envelope - `data` is the serializer,
-  `pagination` the kind the view uses;
-* `page_size` documented only on a view that lets the client choose it;
-* the error envelope as one shared component, referenced by every
-  operation, with `data.fields` on the ones that validate input.
+* every 2xx answer of a view with `EnvelopeMixin` inside the envelope -
+  `data` is the serializer, and a delete is the 200 it answers;
+* a paged list as its own envelope, `pagination` the kind the view uses,
+  under a name that says the kind - `ItemPage`, `ItemCursorPage` - so it is
+  never mistaken for DRF's own `PaginatedItemList`;
+* `page_size` documented only on a view that lets the client choose it,
+  with its ceiling as the maximum;
+* the error envelope as one shared component, `ErrorEnvelope`, the
+  `default` answer of every operation, and `ValidationErrorEnvelope`, with
+  `data.fields`, the 400 of every operation that takes a body - a failure a
+  view documents itself is kept. Only while the project's
+  `EXCEPTION_HANDLER` is this library's: otherwise failures are DRF's
+  shape, and the schema promises no other.
+
+A view without the mixin is documented as it answers - its successes bare,
+its pages in the envelope, as the paginators answer them. One that answers
+with `success_response` by hand is in the envelope at runtime and not in
+the schema: give it the mixin.
+
+Install it with `'DEFAULT_SCHEMA_CLASS': 'drf_parcel.schema.ParcelAutoSchema'`,
+or mix `ParcelSchemaMixin` into a project's own `AutoSchema`.
 
 A frontend generating its types from the schema then writes
 `response.data.id`, which is what arrives.

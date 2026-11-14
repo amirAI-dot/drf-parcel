@@ -61,3 +61,39 @@ def build_envelope(
         envelope['error_code'] = error_code
 
     return envelope
+
+
+def envelope_schema(
+    data: Mapping[str, Any],
+    *,
+    pagination: Mapping[str, Any] | None = None,
+    error: bool = False,
+) -> dict[str, Any]:
+    """
+    The OpenAPI schema of an envelope around ``data`` - the shape above, as a schema.
+
+    Kept beside ``build_envelope`` so that the shape and its description
+    change together.
+    """
+    properties: dict[str, Any] = {
+        # Not an enum: drf-spectacular would lift each into a component of its own.
+        'success': {
+            'type': 'boolean',
+            'example': not error,
+            'description': 'Always false on a failure.' if error else 'Always true on a success.',
+        },
+        'status_code': {'type': 'integer'},
+        'message': {'type': 'string'},
+        'data': dict(data),
+    }
+    required = list(KEYS)
+
+    if pagination is not None:
+        properties['pagination'] = dict(pagination)
+        required.append('pagination')
+
+    if error:
+        properties['error_code'] = {'type': 'string'}
+        required.append('error_code')
+
+    return {'type': 'object', 'properties': properties, 'required': required}
