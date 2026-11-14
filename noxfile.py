@@ -8,7 +8,7 @@ Every check the project runs, defined once - locally and in CI alike.
     nox -s "tests(3.13-django6.1)"           one combination
     nox -s oldest                            the oldest release of everything supported
     nox -s messages                          the catalogues compiled, .po to .mo
-    nox -s package                           the built wheel installs, its catalogue in it
+    nox -s package                           the built wheel installs, and the example runs on it
 
 CI runs these same sessions, built from the same table, so a check that
 passes here passes there and a supported version cannot be left out of one.
@@ -110,7 +110,8 @@ def messages(session: nox.Session) -> None:
 def package(session: nox.Session) -> None:
     """
     What is published works: the wheel is built and installed alone - not the
-    source tree - and its catalogue is in it.
+    source tree - its catalogue is in it, and the example project's tests run
+    on it, so a file left out of the package fails here.
     """
     session.install('build')
     out = session.create_tmp()
@@ -128,3 +129,17 @@ def package(session: nox.Session) -> None:
             'or not (root / "locale/fa/LC_MESSAGES/django.mo").is_file() '
             'or not (root / "py.typed").is_file())',
         )
+
+    with session.chdir('example'):
+        session.run('python', 'manage.py', 'check', '--fail-level', 'WARNING')
+        # The example's schema is valid OpenAPI, with no warning drf-spectacular could give.
+        session.run(
+            'python',
+            'manage.py',
+            'spectacular',
+            '--validate',
+            '--fail-on-warn',
+            '--file',
+            os.devnull,
+        )
+        session.run('python', 'manage.py', 'test', '--noinput')

@@ -68,6 +68,9 @@ answers 200 with the envelope rather than a 204 with nothing. A file, a
 stream, a redirect or a CSV is left alone, and so is a view with
 `parcel_wrap = False`.
 
+A shop that uses every part of it, to run and read, is in
+[`example/`](example/README.md).
+
 ## Errors
 
 ```python

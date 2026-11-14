@@ -68,6 +68,9 @@ class TotalsView(EnvelopeMixin, APIView):
 استریم، ریدایرکت یا CSV دست نمی‌خورد، و viewی هم که `parcel_wrap = False`
 دارد.
 
+یک فروشگاه که همه‌ی بخش‌های آن را به کار می‌برد، برای اجرا کردن و خواندن، در
+[`example/`](example/README.fa.md) است.
+
 ## خطاها
 
 ```python
