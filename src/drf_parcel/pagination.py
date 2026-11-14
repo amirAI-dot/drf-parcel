@@ -21,7 +21,7 @@ or the default.
 """
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Final
 from urllib import parse
 
 from django.db.models import QuerySet
@@ -31,8 +31,49 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 
 from drf_parcel import conf
+from drf_parcel.envelope import envelope_schema
 from drf_parcel.exceptions import InvalidCursorError
 from drf_parcel.responses import EnvelopeResponse, success_response
+
+#: The schema of a numbered page's ``pagination``.
+PAGE_SCHEMA: Final[dict[str, Any]] = {
+    'type': 'object',
+    'properties': {
+        'type': {'type': 'string', 'example': 'page', 'description': 'Always "page".'},
+        'count': {'type': 'integer', 'description': 'Rows in the whole list.'},
+        'page': {'type': 'integer', 'description': 'This page, from 1.'},
+        'pages': {'type': 'integer', 'description': 'How many pages there are.'},
+        'page_size': {'type': 'integer', 'description': 'The size used, after the ceiling.'},
+        'has_next': {'type': 'boolean'},
+        'has_previous': {'type': 'boolean'},
+    },
+    'required': ['type', 'count', 'page', 'pages', 'page_size', 'has_next', 'has_previous'],
+}
+
+#: The schema of a feed's ``pagination``.
+CURSOR_SCHEMA: Final[dict[str, Any]] = {
+    'type': 'object',
+    'properties': {
+        'type': {'type': 'string', 'example': 'cursor', 'description': 'Always "cursor".'},
+        'next_cursor': {
+            'type': 'string',
+            'nullable': True,
+            'description': 'Sent back as ?cursor= for the next page; null at the end.',
+        },
+        'previous_cursor': {'type': 'string', 'nullable': True},
+        'page_size': {'type': 'integer', 'description': 'The size used, after the ceiling.'},
+        'has_next': {'type': 'boolean'},
+        'has_previous': {'type': 'boolean'},
+    },
+    'required': [
+        'type',
+        'next_cursor',
+        'previous_cursor',
+        'page_size',
+        'has_next',
+        'has_previous',
+    ],
+}
 
 
 class _PageSize:
@@ -66,6 +107,25 @@ class _PageSize:
             return conf.page_size()
 
         return conf.get(name.upper())
+
+    def get_schema_operation_parameters(self, view: APIView) -> list[dict[str, Any]]:
+        """
+        The query parameters, as DRF documents them - ``page_size`` only on a
+        view that lets the client choose, with its ceiling.
+        """
+        self.view = view
+        self.page_size_query_param = self.client_page_size_param()
+        parameters: list[dict[str, Any]] = super().get_schema_operation_parameters(view)  # type: ignore[misc]
+
+        for parameter in parameters:
+            if parameter['name'] == self.page_size_query_param:
+                parameter['schema'] = {
+                    **parameter['schema'],
+                    'minimum': 1,
+                    'maximum': self._setting('max_page_size'),
+                }
+
+        return parameters
 
     def client_page_size_param(self) -> str | None:
         """The parameter a client chooses with - none where it may not choose."""
@@ -116,6 +176,10 @@ class PageNumberPagination(_PageSize, pagination.PageNumberPagination):
     def get_paginated_response(self, data: Any) -> EnvelopeResponse:
         return success_response(data, pagination=self.pagination_meta())
 
+    def get_paginated_response_schema(self, schema: dict[str, Any]) -> dict[str, Any]:
+        """The envelope a page answers in: the rows under ``data``, the pager beside them."""
+        return envelope_schema(schema, pagination=PAGE_SCHEMA)
+
     def pagination_meta(self) -> dict[str, Any]:
         """Everything a client needs to draw a pager, and nothing else."""
         assert self.request is not None
@@ -160,6 +224,10 @@ class CursorPagination(_PageSize, pagination.CursorPagination):
 
     def get_paginated_response(self, data: Any) -> EnvelopeResponse:
         return success_response(data, pagination=self.pagination_meta())
+
+    def get_paginated_response_schema(self, schema: dict[str, Any]) -> dict[str, Any]:
+        """The envelope a feed answers in: the rows under ``data``, the cursors beside them."""
+        return envelope_schema(schema, pagination=CURSOR_SCHEMA)
 
     def pagination_meta(self) -> dict[str, Any]:
         """The cursors to send back, and whether there is anything to send them for."""

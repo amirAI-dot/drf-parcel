@@ -40,6 +40,7 @@ REST_FRAMEWORK: dict[str, object] = {
     'UNAUTHENTICATED_USER': None,
     'DEFAULT_PAGINATION_CLASS': 'drf_parcel.pagination.PageNumberPagination',
     'EXCEPTION_HANDLER': 'drf_parcel.handlers.exception_handler',
+    'DEFAULT_SCHEMA_CLASS': 'drf_parcel.schema.ParcelAutoSchema',
 }
 
 _DATABASES = {
