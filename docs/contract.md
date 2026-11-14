@@ -454,7 +454,7 @@ DRF_PARCEL = {
 
 | key | default | what it decides |
 |---|---|---|
-| `PAGE_SIZE` | `20` | the page size when a view names none |
+| `PAGE_SIZE` | `20` | the page size when a view names none. Left out, DRF's own `REST_FRAMEWORK['PAGE_SIZE']` is read when it is set - a project that set it there keeps its size - and only then `20` |
 | `MAX_PAGE_SIZE` | `100` | the ceiling on a size the client chooses |
 | `CLIENT_PAGE_SIZE` | `False` | whether the client may choose the size |
 | `PAGE_SIZE_QUERY_PARAM` | `'page_size'` | the parameter it chooses it with |
