@@ -5,14 +5,16 @@ A setting that would only fail on the first request that reads it fails
 instead on ``manage.py check`` and ``runserver`` - before a client finds it.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from django.apps import AppConfig
 from django.core.checks import CheckMessage, Error
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.module_loading import import_string
 
 from drf_parcel import conf
+from drf_parcel.handlers import STANDARD_CODES
 
 
 def check_settings(
@@ -25,7 +27,7 @@ def check_settings(
     except ImproperlyConfigured as refused:
         return [Error(str(refused), id='drf_parcel.E001')]
 
-    return _page_size_problems()
+    return _page_size_problems() + _error_problems()
 
 
 def _page_size_problems() -> list[CheckMessage]:
@@ -72,6 +74,92 @@ def _page_size_problems() -> list[CheckMessage]:
         )
 
     return problems
+
+
+def _error_problems() -> list[CheckMessage]:
+    problems: list[CheckMessage] = []
+
+    if conf.get('FIELD_ERRORS') not in ('detailed', 'messages'):
+        problems.append(
+            Error(
+                "DRF_PARCEL['FIELD_ERRORS'] must be 'detailed' or 'messages'.",
+                id='drf_parcel.E006',
+            )
+        )
+
+    separator = conf.get('FIELD_PATH_SEPARATOR')
+
+    if not isinstance(separator, str) or not separator:
+        problems.append(
+            Error(
+                "DRF_PARCEL['FIELD_PATH_SEPARATOR'] must be a character or more.",
+                id='drf_parcel.E007',
+            )
+        )
+
+    problems.extend(_error_code_problems())
+
+    for name in ('HANDLE_INTEGRITY_ERRORS', 'RAISE_UNHANDLED_IN_DEBUG'):
+        if not isinstance(conf.get(name), bool):
+            problems.append(
+                Error(f"DRF_PARCEL['{name}'] must be True or False.", id='drf_parcel.E009')
+            )
+
+    problems.extend(_reporter_problems())
+    return problems
+
+
+def _error_code_problems() -> list[CheckMessage]:
+    renamed = conf.get('ERROR_CODES')
+
+    if not isinstance(renamed, Mapping):
+        return [Error("DRF_PARCEL['ERROR_CODES'] must be a dictionary.", id='drf_parcel.E008')]
+
+    problems: list[CheckMessage] = []
+    unknown = sorted(set(renamed) - set(STANDARD_CODES))
+
+    if unknown:
+        problems.append(
+            Error(
+                f"DRF_PARCEL['ERROR_CODES'] renames codes the library does not send: "
+                f'{", ".join(unknown)}.',
+                hint=f'It sends {", ".join(STANDARD_CODES)}.',
+                id='drf_parcel.E008',
+            )
+        )
+
+    if not all(isinstance(new, str) and new for new in renamed.values()):
+        problems.append(
+            Error(
+                "Every new name in DRF_PARCEL['ERROR_CODES'] must be a word.",
+                id='drf_parcel.E008',
+            )
+        )
+
+    return problems
+
+
+def _reporter_problems() -> list[CheckMessage]:
+    path = conf.get('REPORTER')
+
+    if path is None:
+        return []
+
+    try:
+        reporter = import_string(path) if isinstance(path, str) else None
+    except ImportError:
+        reporter = None
+
+    if not callable(reporter):
+        return [
+            Error(
+                f"DRF_PARCEL['REPORTER'] must be the dotted path to a function, not {path!r}.",
+                hint='It is called with each unexpected exception and its context.',
+                id='drf_parcel.E010',
+            )
+        ]
+
+    return []
 
 
 def _is_positive_whole_number(value: object) -> bool:

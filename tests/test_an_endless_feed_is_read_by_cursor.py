@@ -81,7 +81,7 @@ def test_a_cursor_the_server_cannot_read_is_the_clients_mistake(
     response = client.get('/feed/', {'cursor': 'not a cursor'})
 
     assert response.status_code == 400
-    assert response.data['detail'].code == 'invalid_cursor'
+    assert response.json()['error_code'] == 'invalid_cursor'
 
 
 def test_the_client_chooses_a_size_under_the_ceiling(

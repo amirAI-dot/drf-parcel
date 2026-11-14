@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework.routers import SimpleRouter
 
-from tests.project import views
+from tests.project import failures, views
 from tests.project.shelf import views as shelf
 
 router = SimpleRouter()
@@ -22,5 +22,11 @@ urlpatterns = [
     path('items/plain/', shelf.PlainItemList.as_view()),
     path('feed/', shelf.Feed.as_view()),
     path('feed/oldest-first/', shelf.OldestFirstFeed.as_view()),
+    path('fail/<str:how>/', failures.FailingView.as_view()),
+    path('orders/', failures.OrderView.as_view()),
+    path('orders/many/', failures.ManyOrdersView.as_view()),
+    path('signed-in/', failures.SignedInView.as_view()),
+    path('tags/', failures.TagView.as_view()),
+    path('read-only/', failures.ReadOnlyView.as_view()),
     *router.urls,
 ]

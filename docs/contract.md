@@ -324,7 +324,7 @@ class DomainError(APIException):
   the default language.
 
 The library ships the common ones - `InvalidInputError`,
-`AuthenticationFailedError`, `PermissionDeniedError`, `NotFoundError`,
+`InvalidCursorError`, `AuthenticationFailedError`, `PermissionDeniedError`, `NotFoundError`,
 `ConflictError`, `RateLimitedError`, `ServiceUnavailableError`.
 
 **A project's existing errors keep working.** Any subclass of DRF's
