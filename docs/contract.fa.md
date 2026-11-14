@@ -37,6 +37,31 @@
   خراب می‌شود.
 * **`status_code` همیشه با کد HTTP همان پاسخ برابر است.**
 
+### پیامی که پاسخ موفق می‌گوید
+
+وقتی کسی پیامی ننوشته، از روی خود درخواست تعیین می‌شود - پس ViewSet،
+`APIView` ساده و `@action` سفارشی همه چیز معقولی می‌گویند، و هیچ‌کدام لازم
+نیست چیزی یادشان بماند:
+
+| درخواست | پیام | کلیدش در `MESSAGES` |
+|---|---|---|
+| پاسخ `201` | «Created.» - ساخته شد. | `created` |
+| `PUT` یا `PATCH` | «Saved.» - ذخیره شد. | `saved` |
+| `DELETE` | «Deleted.» - حذف شد. | `deleted` |
+| هر چیز دیگر | «Done.» - انجام شد. | `done` |
+
+کلاینت بیشتر پیام نوشتن را نشان می‌دهد - یک toast که می‌گوید «ذخیره شد» - و
+به‌ندرت پیام خواندن را. هر کدام در سه سطح عوض می‌شود، و نزدیک‌ترین برنده است:
+
+```python
+return success_response(data=order, message=_('The order was paid.'))   # one answer
+
+class ProductViewSet(EnvelopeMixin, ModelViewSet):                        # one view
+    envelope_messages = {'create': _('The product was added.')}
+
+DRF_PARCEL = {'MESSAGES': {'created': _('Saved successfully.')}}          # the project
+```
+
 ### یک شیء
 
 ```json
@@ -425,6 +450,7 @@ DRF_PARCEL = {
     'HANDLE_INTEGRITY_ERRORS': False,
     'RAISE_UNHANDLED_IN_DEBUG': True,
     'REPORTER': None,
+    'MESSAGES': {},
 }
 ```
 
@@ -440,6 +466,7 @@ DRF_PARCEL = {
 | `HANDLE_INTEGRITY_ERRORS` | `False` | بخش ۳.۵ |
 | `RAISE_UNHANDLED_IN_DEBUG` | `True` | بخش ۳.۴ |
 | `REPORTER` | `None` | مسیر تابعی که با هر 500 صدا زده می‌شود |
+| `MESSAGES` | `{}` | عوض کردن پیام پیش‌فرض موفقیت، با کلیدش: `created`، `saved`، `deleted`، `done` (۱) |
 
 هر view تنظیمات صفحه‌بندی را با attributeهایی به همان اسم و با حروف کوچک
 عوض می‌کند: `page_size`، `max_page_size`، `client_page_size`.
@@ -488,6 +515,7 @@ DRF_PARCEL = {
    `InvalidInputError` است.
 3. ~~`IntegrityError`: 409 یا 400؟~~ **تصمیم: بر اساس نوع قید**، که از کد
    درایور خوانده می‌شود (۳.۵).
-4. **پیام‌های پیش‌فرض**: «Done.» برای هر موفقیت (DayarDarman)، یا یکی برای
-   هر اکشن - «Created.»، «Deleted.»، «List retrieved.» (Elin، Hilacare)؟
+4. ~~پیام پیش‌فرض موفقیت؟~~ **تصمیم: از روی خود درخواست** - «Created.» روی
+   201، «Saved.» روی `PUT` و `PATCH`، «Deleted.» روی `DELETE`، و «Done.» در
+   بقیه - که برای یک پاسخ، یک view، یا کل پروژه با `MESSAGES` عوض می‌شود (۱).
 5. **`handler404` و `handler500`** (۳.۷): در اولین نسخه، یا بعداً؟

@@ -34,6 +34,31 @@ Rules:
   sentence is reworded.
 * **`status_code` equals the HTTP status** of the response it is in, always.
 
+### The message a success says
+
+When nobody wrote one, it is read off the request itself - so a viewset, a
+plain `APIView` and a custom `@action` all say something sensible, and none
+has to remember:
+
+| the request | the message | its key in `MESSAGES` |
+|---|---|---|
+| answered `201` | "Created." | `created` |
+| `PUT` or `PATCH` | "Saved." | `saved` |
+| `DELETE` | "Deleted." | `deleted` |
+| anything else | "Done." | `done` |
+
+A client mostly shows a write's message - a toast saying "Saved." - and
+rarely a read's. Each is replaced at three levels, the nearest winning:
+
+```python
+return success_response(data=order, message=_('The order was paid.'))   # one answer
+
+class ProductViewSet(EnvelopeMixin, ModelViewSet):                        # one view
+    envelope_messages = {'create': _('The product was added.')}
+
+DRF_PARCEL = {'MESSAGES': {'created': _('Saved successfully.')}}          # the project
+```
+
 ### A single object
 
 ```json
@@ -423,6 +448,7 @@ DRF_PARCEL = {
     'HANDLE_INTEGRITY_ERRORS': False,
     'RAISE_UNHANDLED_IN_DEBUG': True,
     'REPORTER': None,
+    'MESSAGES': {},
 }
 ```
 
@@ -438,6 +464,7 @@ DRF_PARCEL = {
 | `HANDLE_INTEGRITY_ERRORS` | `False` | 3.5 |
 | `RAISE_UNHANDLED_IN_DEBUG` | `True` | 3.4 |
 | `REPORTER` | `None` | a dotted path to a function called with each 500 |
+| `MESSAGES` | `{}` | a default success message replaced, by its key: `created`, `saved`, `deleted`, `done` (1) |
 
 A view overrides the page settings with attributes of the same name in
 lower case: `page_size`, `max_page_size`, `client_page_size`.
@@ -486,6 +513,8 @@ For the owner to decide before stage 1.
    `InvalidInputError`.
 3. ~~`IntegrityError`: 409 or 400?~~ **Decided: by the kind of constraint**,
    read from the driver's code (3.5).
-4. **Default messages**: "Done." for every success (DayarDarman), or one per
-   action - "Created.", "Deleted.", "List retrieved." (Elin, Hilacare)?
+4. ~~The default success message?~~ **Decided: read off the request** -
+   "Created." on a 201, "Saved." on `PUT`/`PATCH`, "Deleted." on `DELETE`,
+   "Done." otherwise - replaced per answer, per view, or for the project
+   with `MESSAGES` (1).
 5. **`handler404` and `handler500`** (3.7): in the first release, or later?
