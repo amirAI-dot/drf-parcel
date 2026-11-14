@@ -84,7 +84,9 @@ DRF_PARCEL = {'MESSAGES': {'created': _('Saved successfully.')}}          # the 
 ### Deleted
 
 A `204 No Content` carries no body by definition, so the envelope would be
-thrown away. A delete answers **200** with the envelope instead:
+thrown away. A delete answers **200** with the envelope instead - and so
+does every 204 the library answers, a view's bare one and
+`success_response(status_code=204)` alike:
 
 ```json
 {
@@ -110,7 +112,8 @@ thrown away. A delete answers **200** with the envelope instead:
 
 * a response that is not JSON - a file, a PDF, a stream, a redirect;
 * a view that opts out (`parcel_wrap = False`), for a webhook or a health
-  check whose caller expects a shape of its own;
+  check whose caller expects a shape of its own - its pages too, which are
+  DRF's own `count`, `next`, `previous` and `results`;
 * a response already in the envelope - `success_response` returns one, and
   it is not wrapped twice.
 
@@ -262,9 +265,9 @@ The first problem in `message`, every problem in `data.fields`:
 | 400 | `validation_error` | a serializer, a Django `ValidationError` | `fields` |
 | 400 | `parse_error` | a body that is not valid JSON | `{}` |
 | 400 | `invalid_cursor` | a cursor the server cannot read | `{}` |
-| 401 | `not_authenticated` | no credentials | `{}` |
+| 401 | `not_authenticated` | no credentials - 403, as DRF answers it, when the view's first authentication class sends no `WWW-Authenticate` (session authentication) | `{}` |
 | 401 | `authentication_failed` | wrong or expired credentials | `{}` |
-| 403 | `permission_denied` | DRF's or Django's `PermissionDenied` | `{}` |
+| 403 | `permission_denied` | DRF's or Django's `PermissionDenied` - with the sentence it was raised with, if any | `{}` |
 | 404 | `not_found` | `NotFound`, Django's `Http404` | `{}` |
 | 405 | `method_not_allowed` | a method the view has not got | `{}` |
 | 406 | `not_acceptable` | an `Accept` nobody can answer | `{}` |
@@ -490,8 +493,9 @@ OpenAPI document says what the wire carries:
   `default` answer of every operation, and `ValidationErrorEnvelope`, with
   `data.fields`, the 400 of every operation that takes a body - a failure a
   view documents itself is kept. Only while the project's
-  `EXCEPTION_HANDLER` is this library's: otherwise failures are DRF's
-  shape, and the schema promises no other.
+  `EXCEPTION_HANDLER` is this library's - or a project's own that calls it
+  and says so with `functools.wraps(exception_handler)`: otherwise failures
+  are DRF's shape, and the schema promises no other.
 
 A view without the mixin is documented as it answers - its successes bare,
 its pages in the envelope, as the paginators answer them. One that answers

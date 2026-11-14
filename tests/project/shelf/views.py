@@ -75,3 +75,13 @@ class FourAPageItemList(ItemList):
     """A view whose size is its paginator's."""
 
     pagination_class = FourAPage
+
+
+class OptedOutItemList(ItemList):
+    """A list whose caller expects DRF's own page: the view opts out, its pages too."""
+
+    parcel_wrap = False
+
+
+class OptedOutFeed(Feed):
+    parcel_wrap = False

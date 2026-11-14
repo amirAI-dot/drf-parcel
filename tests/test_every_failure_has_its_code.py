@@ -33,6 +33,20 @@ def test_a_caller_who_may_not(client: APIClient, how: str) -> None:
     assert response.json()['error_code'] == 'permission_denied'
 
 
+def test_a_refusal_keeps_the_sentence_written_for_it(client: APIClient) -> None:
+    """DRF's own handler says it; dropping it told the person less than DRF did."""
+    response = client.get('/fail/django-permission-message/')
+
+    assert response.status_code == 403
+    assert response.json()['message'] == 'You may only edit your own orders.'
+
+
+def test_a_refusal_with_no_sentence_says_the_general_one(client: APIClient) -> None:
+    assert client.get('/fail/django-permission/').json()['message'] == (
+        'You do not have permission to perform this action.'
+    )
+
+
 def test_nobody_signed_in(client: APIClient) -> None:
     response = client.get('/signed-in/')
 
@@ -105,6 +119,18 @@ def test_a_failure_has_no_pagination_and_a_type_of_json(client: APIClient) -> No
 def test_the_project_renames_a_standard_code(client: APIClient) -> None:
     assert client.get('/fail/http404/').json()['error_code'] == 'missing'
     assert client.post('/orders/', {}, format='json').json()['error_code'] == 'validation_failed'
+
+
+@pytest.mark.parametrize('renamed', [['not_found'], {'not_found': 5}, {'not_found': ''}])
+def test_a_renaming_that_cannot_work_never_breaks_the_answer(
+    client: APIClient, renamed: object
+) -> None:
+    """manage.py check reports it; a failure answered meanwhile is still answered."""
+    with override_settings(DRF_PARCEL={'ERROR_CODES': renamed}):
+        response = client.get('/fail/http404/')
+
+    assert response.status_code == 404
+    assert response.json()['error_code'] == 'not_found'
 
 
 @override_settings(DRF_PARCEL={'ERROR_CODES': {'not_found': 'missing'}})

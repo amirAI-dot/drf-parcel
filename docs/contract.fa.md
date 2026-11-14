@@ -87,7 +87,9 @@ DRF_PARCEL = {'MESSAGES': {'created': _('Saved successfully.')}}          # the 
 ### حذف شد
 
 پاسخ `204 No Content` طبق تعریف بدنه ندارد، پس قالب دور ریخته می‌شد. حذف
-به جای آن **200** همراه با قالب برمی‌گرداند:
+به جای آن **200** همراه با قالب برمی‌گرداند - و همین‌طور هر 204ی که
+کتابخانه جواب می‌دهد، چه 204 بدون قالب یک view و چه
+`success_response(status_code=204)`:
 
 ```json
 {
@@ -113,7 +115,8 @@ DRF_PARCEL = {'MESSAGES': {'created': _('Saved successfully.')}}          # the 
 
 * پاسخی که JSON نیست - فایل، PDF، استریم، ریدایرکت؛
 * viewی که خودش بیرون می‌ماند (`parcel_wrap = False`)، برای webhook یا
-  health check که فراخواننده‌اش شکل خودش را انتظار دارد؛
+  health check که فراخواننده‌اش شکل خودش را انتظار دارد - صفحه‌هایش هم، که
+  همان `count`، `next`، `previous` و `results` خود DRF هستند؛
 * پاسخی که از قبل در قالب است - `success_response` یکی برمی‌گرداند، و دو
   بار قالب‌بندی نمی‌شود.
 
@@ -265,9 +268,9 @@ cursorی که سرور نتواند بخواند **400** (`invalid_cursor`) اس
 | 400 | `validation_error` | serializer، یا `ValidationError` خود Django | `fields` |
 | 400 | `parse_error` | بدنه‌ای که JSON معتبر نیست | `{}` |
 | 400 | `invalid_cursor` | cursorی که سرور نمی‌تواند بخواند | `{}` |
-| 401 | `not_authenticated` | اطلاعات ورود فرستاده نشده | `{}` |
+| 401 | `not_authenticated` | اطلاعات ورود فرستاده نشده - و 403، همان‌طور که DRF جواب می‌دهد، وقتی اولین کلاس احراز هویت view هدر `WWW-Authenticate` نمی‌فرستد (احراز هویت با session) | `{}` |
 | 401 | `authentication_failed` | اطلاعات ورود اشتباه یا منقضی | `{}` |
-| 403 | `permission_denied` | `PermissionDenied` در DRF یا Django | `{}` |
+| 403 | `permission_denied` | `PermissionDenied` در DRF یا Django - با جمله‌ای که با آن raise شده، اگر داشته باشد | `{}` |
 | 404 | `not_found` | `NotFound`، یا `Http404` خود Django | `{}` |
 | 405 | `method_not_allowed` | متدی که view ندارد | `{}` |
 | 406 | `not_acceptable` | `Accept`ی که کسی جوابش را ندارد | `{}` |
@@ -489,8 +492,10 @@ DRF_PARCEL = {
 * قالب خطا به‌عنوان یک component مشترک، `ErrorEnvelope`، که پاسخ `default`
   همه‌ی عملیات‌هاست، و `ValidationErrorEnvelope`، با `data.fields`، که پاسخ 400
   هر عملیاتی است که بدنه می‌گیرد - خطایی که خود view مستند کرده حفظ می‌شود.
-  فقط تا وقتی که `EXCEPTION_HANDLER` پروژه مال این کتابخانه است: در غیر این
-  صورت خطاها شکل خود DRF را دارند، و اسکیما شکل دیگری را قول نمی‌دهد.
+  فقط تا وقتی که `EXCEPTION_HANDLER` پروژه مال این کتابخانه است - یا handler
+  خود پروژه که آن را صدا می‌زند و با `functools.wraps(exception_handler)` این را
+  می‌گوید: در غیر این صورت خطاها شکل خود DRF را دارند، و اسکیما شکل دیگری را
+  قول نمی‌دهد.
 
 viewی که mixin ندارد همان‌طور که جواب می‌دهد مستند می‌شود - پاسخ‌های موفقش
 بدون قالب، و صفحه‌هایش در قالب، همان‌طور که paginatorها جواب می‌دهند. viewی که

@@ -102,7 +102,9 @@ def _as_drf(exc: Exception) -> Exception:
         return exceptions.NotFound()
 
     if isinstance(exc, DjangoPermissionDenied):
-        return exceptions.PermissionDenied()
+        # A message somebody wrote for the person refused is said, as DRF says it;
+        # Http404's is not, because Django's names the model that was looked for.
+        return exceptions.PermissionDenied(exc.args[0] if exc.args else None)
 
     if isinstance(exc, DjangoValidationError):
         # The codes Django gave each message - 'required', 'unique' - are kept.
@@ -239,14 +241,24 @@ def _failure(
 ) -> EnvelopeResponse:
     """A failure in the envelope, under the project's name for its code, its write undone."""
     set_rollback()
-    renamed = conf.get('ERROR_CODES')
-    assert isinstance(renamed, Mapping)
     return error_response(
         message=message,
-        error_code=str(renamed.get(code, code)),
+        error_code=_renamed(code),
         status_code=status_code,
         data=dict(data or {}),
     )
+
+
+def _renamed(code: str) -> str:
+    """
+    The project's name for a code, from ``ERROR_CODES``.
+
+    A renaming that cannot work - reported by ``manage.py check`` - is passed
+    over rather than allowed to break the answer to a failure.
+    """
+    renamed = conf.get('ERROR_CODES')
+    new = renamed.get(code) if isinstance(renamed, Mapping) else None
+    return new if isinstance(new, str) and new else code
 
 
 def _carry_headers(answered: Response, response: EnvelopeResponse) -> EnvelopeResponse:

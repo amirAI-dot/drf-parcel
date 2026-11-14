@@ -116,6 +116,25 @@ def test_a_page_by_drfs_own_paginator_is_wrapped_like_any_answer(schema: Schema)
     assert 'results' in component(schema, answer['properties']['data'])['properties']
 
 
+def test_a_page_of_a_view_that_opts_out_is_described_as_drfs(schema: Schema) -> None:
+    for path in ('/opted-out-list/', '/opted-out-feed/'):
+        page = component(schema, body(schema, path, 'get', '200'))
+
+        assert 'results' in page['properties'], path
+        assert 'success' not in page['properties'], path
+
+
+def test_a_page_named_outside_an_operation_does_not_break() -> None:
+    """drf-spectacular may name a page before, or without, describing an operation."""
+    from drf_parcel.schema import ParcelAutoSchema
+    from tests.project.shelf.views import ItemList
+
+    described = ParcelAutoSchema()
+    described.view = ItemList()
+
+    assert described.get_paginated_name('Item') == 'ItemPage'
+
+
 def test_page_size_only_where_the_client_may_choose_it(schema: Schema) -> None:
     assert 'page_size' not in parameters(schema, '/items/')
     assert 'page' in parameters(schema, '/items/')
@@ -190,6 +209,19 @@ def test_field_errors_as_messages_are_described_as_text() -> None:
     ]['fields']
 
     assert fields['additionalProperties']['items'] == {'type': 'string'}
+
+
+@override_settings(
+    REST_FRAMEWORK={
+        'DEFAULT_AUTHENTICATION_CLASSES': [],
+        'DEFAULT_PAGINATION_CLASS': 'drf_parcel.pagination.PageNumberPagination',
+        'DEFAULT_SCHEMA_CLASS': 'drf_parcel.schema.ParcelAutoSchema',
+        'EXCEPTION_HANDLER': 'tests.project.handlers.project_exception_handler',
+    }
+)
+def test_a_projects_own_handler_built_on_the_librarys_is_recognised() -> None:
+    """A handler that calls the library's and says so with functools.wraps."""
+    assert 'ErrorEnvelope' in generate()['components']['schemas']
 
 
 @override_settings(

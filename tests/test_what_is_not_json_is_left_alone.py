@@ -7,6 +7,8 @@ bytes in it, or a webhook's caller rejects an answer it did not expect.
 
 from rest_framework.test import APIClient
 
+from tests.conftest import MakeItems
+
 
 def test_a_plain_django_response_is_left_alone(client: APIClient) -> None:
     response = client.get('/not-json/')
@@ -53,3 +55,23 @@ def test_a_failure_made_by_hand_is_left_as_it_was_made(client: APIClient) -> Non
 
     assert response.status_code == 400
     assert response.json() == {'detail': 'Made by hand.'}
+
+
+def test_a_page_of_a_view_that_opts_out_is_drfs_own(
+    client: APIClient, make_items: MakeItems
+) -> None:
+    """parcel_wrap = False leaves every answer as DRF gives it - its pages too."""
+    make_items(3)
+
+    answer = client.get('/items/opted-out/').json()
+
+    assert set(answer) == {'count', 'next', 'previous', 'results'}
+    assert len(answer['results']) == 3
+
+
+def test_a_feed_of_a_view_that_opts_out_is_drfs_own(
+    client: APIClient, make_items: MakeItems
+) -> None:
+    make_items(3)
+
+    assert set(client.get('/feed/opted-out/').json()) == {'next', 'previous', 'results'}

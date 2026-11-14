@@ -30,5 +30,17 @@ Everything [the contract](docs/contract.md) says, built.
   `manage.py check` reports a value that cannot work.
 * **Persian**, for every sentence the library says.
 
+Found by a review before the release, and fixed:
+
+* `success_response(status_code=204)` answers 200 with its body, as every
+  other 204 does - a 204 carries none, and the client read nothing.
+* Django's `PermissionDenied` keeps the sentence it was raised with, as DRF's
+  own handler does.
+* A view with `parcel_wrap = False` is answered as DRF answers - its pages
+  too, which were still in the envelope.
+* An `ERROR_CODES` that cannot work never breaks the answer to a failure.
+* The schema recognises a project's own handler built on the library's, and
+  no longer fails when drf-spectacular names a page outside an operation.
+
 Python 3.11 to 3.14; Django 5.2, 6.0 and 6.1; Django REST framework 3.16 and
 later; drf-spectacular 0.28 and later.
