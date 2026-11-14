@@ -2,7 +2,9 @@
 
 [English](CHANGELOG.md)
 
-## منتشرنشده - اولین نسخه
+## منتشرنشده
+
+## 0.1.0 - ۱۴۰۵/۰۸/۲۳ - اولین نسخه
 
 همه‌ی آنچه [قرارداد](https://github.com/amirAI-dot/drf-parcel/blob/main/docs/contract.fa.md) می‌گوید، ساخته شده.
 
