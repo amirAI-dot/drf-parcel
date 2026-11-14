@@ -4,7 +4,7 @@
 
 ## منتشرنشده - اولین نسخه
 
-همه‌ی آنچه [قرارداد](docs/contract.fa.md) می‌گوید، ساخته شده.
+همه‌ی آنچه [قرارداد](https://github.com/amirAI-dot/drf-parcel/blob/main/docs/contract.fa.md) می‌گوید، ساخته شده.
 
 * **قالب پاسخ** - `success`، `status_code`، `message` و `data` روی هر پاسخ؛
   `pagination` روی لیست صفحه‌بندی‌شده؛ `error_code` روی خطا. در یک جا ساخته

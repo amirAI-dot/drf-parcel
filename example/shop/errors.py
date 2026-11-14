@@ -16,6 +16,7 @@ from rest_framework.exceptions import APIException
 from drf_parcel.exceptions import DomainError
 
 
+# --8<-- [start:domain]
 class OutOfStockError(DomainError):
     status_code = status.HTTP_409_CONFLICT
     default_code = 'out_of_stock'
@@ -28,7 +29,14 @@ class StillOrderedError(DomainError):
     default_detail = _('This product has orders, and cannot be deleted.')
 
 
+# --8<-- [end:domain]
+
+
+# --8<-- [start:legacy]
 class PaymentRequiredError(APIException):
     status_code = status.HTTP_402_PAYMENT_REQUIRED
     default_code = 'payment_required'
     default_detail = _('This order is not paid yet.')
+
+
+# --8<-- [end:legacy]

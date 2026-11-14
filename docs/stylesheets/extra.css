@@ -1,0 +1,20 @@
+/* Code reads left to right on a right-to-left page too: without this, the
+   brackets of `success_response()` inside a Persian sentence come out reversed. */
+[dir="rtl"] .md-typeset code {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* A code block, a JSON answer, a table of codes: left to right on every page. */
+[dir="rtl"] .md-typeset pre,
+[dir="rtl"] .md-typeset .highlight {
+  direction: ltr;
+  text-align: left;
+}
+
+/* The Python API is the code's own English: on a Persian page it still reads
+   left to right, or every sentence ends with its full stop at the start. */
+[dir="rtl"] .md-typeset .doc {
+  direction: ltr;
+  text-align: left;
+}

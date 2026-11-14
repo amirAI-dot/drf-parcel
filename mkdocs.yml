@@ -1,0 +1,179 @@
+# The documentation site - MkDocs with the Material theme, in English and in
+# Persian (right to left). A page is docs/<name>.md, and its Persian is
+# docs/<name>.fa.md beside it. Built by `nox -s docs`, published from main.
+#
+# Code shown in a page is included from the example project, which its tests
+# run - so an example in the documentation is an example that works.
+
+site_name: drf-parcel
+site_description: One response shape for a Django REST framework API - success, page and error alike.
+site_url: https://amirai-dot.github.io/drf-parcel/
+repo_url: https://github.com/amirAI-dot/drf-parcel
+repo_name: amirAI-dot/drf-parcel
+edit_uri: edit/main/docs/
+copyright: BSD 3-Clause licence
+
+theme:
+  name: material
+  language: en
+  features:
+    - content.code.copy
+    - content.tabs.link
+    - navigation.indexes
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: '(prefers-color-scheme)'
+      toggle:
+        icon: material/brightness-auto
+        name: Follow the system
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      primary: teal
+      toggle:
+        icon: material/brightness-7
+        name: Dark mode
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      primary: teal
+      toggle:
+        icon: material/brightness-4
+        name: Light mode
+
+hooks:
+  - docs/hooks.py
+
+# The build's own hook is not a page of the site.
+exclude_docs: |
+  hooks.py
+  __pycache__/
+
+extra_css:
+  - stylesheets/extra.css
+
+plugins:
+  - search
+  - autorefs:
+      resolve_closest: true
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            filters: ['!^_']
+            show_if_no_docstring: false
+            separate_signature: true
+            show_signature_annotations: true
+            signature_crossrefs: false
+            heading_level: 2
+            docstring_section_style: list
+            merge_init_into_class: true
+  - i18n:
+      docs_structure: suffix
+      reconfigure_material: true
+      languages:
+        - locale: en
+          name: English
+          default: true
+          build: true
+        - locale: fa
+          name: فارسی
+          build: true
+          theme:
+            language: fa
+          nav_translations:
+            Home: خانه
+            Getting started: شروع
+            Tutorial: آموزش
+            How-to guides: راهنماهای کاربردی
+            Reference: مرجع
+            Python API: API پایتون
+            Explanation: توضیح‌ها
+            Questions: پرسش‌ها
+            Project: پروژه
+            The contract: قرارداد
+            Changelog: تغییرات
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - getting-started/installation.md
+      - getting-started/quickstart.md
+  - Tutorial:
+      - tutorial/index.md
+      - tutorial/01-the-envelope.md
+      - tutorial/02-pages.md
+      - tutorial/03-errors.md
+      - tutorial/04-schema-and-languages.md
+  - How-to guides:
+      - how-to/index.md
+      - how-to/adopt.md
+      - how-to/frontend.md
+      - how-to/choose-a-page.md
+      - how-to/own-errors.md
+      - how-to/rename-error-codes.md
+      - how-to/leave-a-view-out.md
+      - how-to/report-bugs.md
+      - how-to/database-constraints.md
+      - how-to/own-schema-or-handler.md
+      - how-to/testing.md
+  - Reference:
+      - reference/index.md
+      - The contract: contract.md
+      - reference/settings.md
+      - reference/error-codes.md
+      - reference/checks.md
+      - Python API:
+          - reference/api/responses.md
+          - reference/api/pagination.md
+          - reference/api/exceptions.md
+          - reference/api/handlers.md
+          - reference/api/schema.md
+          - reference/api/envelope.md
+  - Explanation:
+      - explanation/index.md
+      - explanation/why-one-envelope.md
+      - explanation/how-an-answer-is-made.md
+      - explanation/alternatives.md
+  - Questions: faq.md
+  - Project:
+      - project/contributing.md
+      - project/versions.md
+      - project/security.md
+      - Changelog: changelog.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path: ['.']
+      check_paths: true
+      dedent_subsections: true
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn

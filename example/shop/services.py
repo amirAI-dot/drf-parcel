@@ -11,6 +11,7 @@ from shop.errors import OutOfStockError, StillOrderedError
 from shop.models import Order, Product
 
 
+# --8<-- [start:place_order]
 def place_order(product: Product, quantity: int) -> Order:
     """An order, taken from the stock - or OutOfStockError, saying how many there are."""
     with transaction.atomic():
@@ -21,6 +22,9 @@ def place_order(product: Product, quantity: int) -> Order:
 
         Product.objects.filter(pk=locked.pk).update(stock=F('stock') - quantity)
         return Order.objects.create(product=locked, quantity=quantity)
+
+
+# --8<-- [end:place_order]
 
 
 def delete_product(product: Product) -> None:

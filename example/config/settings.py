@@ -53,6 +53,7 @@ STATIC_URL = 'static/'
 LANGUAGE_CODE = 'en'
 LANGUAGES = [('en', 'English'), ('fa', 'Persian')]
 
+# --8<-- [start:rest_framework]
 REST_FRAMEWORK = {
     # Nobody signs in to the example: it shows the shape of the answers, not who may ask.
     'DEFAULT_AUTHENTICATION_CLASSES': [],
@@ -63,7 +64,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'drf_parcel.pagination.PageNumberPagination',
     'DEFAULT_SCHEMA_CLASS': 'drf_parcel.schema.ParcelAutoSchema',
 }
+# --8<-- [end:rest_framework]
 
+# --8<-- [start:drf_parcel]
 # drf-parcel: the library's own setting. Every key is optional.
 DRF_PARCEL = {
     'PAGE_SIZE': 10,
@@ -73,6 +76,7 @@ DRF_PARCEL = {
     # Where a bug is reported - Sentry, in a real project.
     'REPORTER': 'shop.reporting.report',
 }
+# --8<-- [end:drf_parcel]
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'The example shop',

@@ -32,6 +32,7 @@ class ProductSerializer(serializers.ModelSerializer[Product]):
         fields = ('id', 'name', 'price', 'stock')
 
 
+# --8<-- [start:products]
 class ProductViewSet(EnvelopeMixin, viewsets.ModelViewSet[Product]):
     """Products, a numbered page at a time."""
 
@@ -59,6 +60,9 @@ class ProductViewSet(EnvelopeMixin, viewsets.ModelViewSet[Product]):
         )
 
 
+# --8<-- [end:products]
+
+
 class OrderSerializer(serializers.ModelSerializer[Order]):
     quantity = serializers.IntegerField(min_value=1, max_value=100)
 
@@ -71,6 +75,7 @@ class OrderSerializer(serializers.ModelSerializer[Order]):
         return services.place_order(validated_data['product'], validated_data['quantity'])
 
 
+# --8<-- [start:orders]
 class OrderViewSet(
     EnvelopeMixin,
     mixins.CreateModelMixin,
@@ -98,6 +103,10 @@ class OrderViewSet(
         return Response({'order': order.pk, 'total': str(order.quantity * order.product.price)})
 
 
+# --8<-- [end:orders]
+
+
+# --8<-- [start:health]
 class HealthView(EnvelopeMixin, APIView):
     """Asked by a load balancer that expects {"ok": true} - so it stays out of the envelope."""
 
@@ -106,3 +115,6 @@ class HealthView(EnvelopeMixin, APIView):
     @extend_schema(responses=inline_serializer('Health', fields={'ok': serializers.BooleanField()}))
     def get(self, request: Request) -> Response:
         return Response({'ok': True})
+
+
+# --8<-- [end:health]
