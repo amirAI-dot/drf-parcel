@@ -26,7 +26,8 @@ INSTALLED_APPS = [
     'tests.project.shelf',
 ]
 
-MIDDLEWARE: list[str] = []
+# The language is the request's - Accept-Language - as in a project that speaks more than one.
+MIDDLEWARE = ['django.middleware.locale.LocaleMiddleware']
 
 ROOT_URLCONF = 'tests.project.urls'
 
