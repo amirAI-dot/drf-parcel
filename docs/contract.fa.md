@@ -328,7 +328,7 @@ class DomainError(APIException):
   raise شود به زبان پیش‌فرض است.
 
 کتابخانه خطاهای رایج را همراه خودش دارد - `InvalidInputError`،
-`AuthenticationFailedError`، `PermissionDeniedError`، `NotFoundError`،
+`InvalidCursorError`، `AuthenticationFailedError`، `PermissionDeniedError`، `NotFoundError`،
 `ConflictError`، `RateLimitedError`، `ServiceUnavailableError`.
 
 **خطاهای فعلی پروژه همچنان کار می‌کنند.** هر زیرکلاس `APIException` در DRF،
@@ -454,7 +454,7 @@ DRF_PARCEL = {
 
 | کلید | پیش‌فرض | چه چیزی را تعیین می‌کند |
 |---|---|---|
-| `PAGE_SIZE` | `20` | اندازه‌ی صفحه وقتی view چیزی نگفته |
+| `PAGE_SIZE` | `20` | اندازه‌ی صفحه وقتی view چیزی نگفته. اگر نوشته نشده باشد، `REST_FRAMEWORK['PAGE_SIZE']` خود DRF خوانده می‌شود اگر تنظیم شده باشد - پروژه‌ای که آن را آنجا گذاشته اندازه‌اش را نگه می‌دارد - و فقط بعد از آن `20` |
 | `MAX_PAGE_SIZE` | `100` | سقف اندازه‌ای که کلاینت انتخاب می‌کند |
 | `CLIENT_PAGE_SIZE` | `False` | آیا کلاینت می‌تواند اندازه را انتخاب کند |
 | `PAGE_SIZE_QUERY_PARAM` | `'page_size'` | اسم پارامتری که با آن انتخاب می‌کند |
@@ -479,11 +479,26 @@ DRF_PARCEL = {
 با بخش اختیاری `schema` (`pip install 'drf-parcel[schema]'`)، سند OpenAPI
 ساخته‌شده همان چیزی را می‌گوید که واقعاً منتقل می‌شود:
 
-* هر پاسخ 2xx داخل قالب - `data` همان serializer است، و `pagination` همان
-  نوعی که view استفاده می‌کند؛
-* `page_size` فقط روی viewی مستند می‌شود که به کلاینت اجازه‌ی انتخاب بدهد؛
-* قالب خطا به‌عنوان یک component مشترک، که همه‌ی عملیات‌ها به آن ارجاع
-  می‌دهند، با `data.fields` روی آن‌هایی که ورودی را اعتبارسنجی می‌کنند.
+* هر پاسخ 2xx یک view با `EnvelopeMixin` داخل قالب - `data` همان serializer
+  است، و حذف همان 200ی است که واقعاً جواب می‌دهد؛
+* لیست صفحه‌بندی‌شده به‌عنوان قالب خودش، با `pagination` از همان نوعی که view
+  استفاده می‌کند، با اسمی که نوعش را می‌گوید - `ItemPage`، `ItemCursorPage` -
+  تا هیچ‌وقت با `PaginatedItemList` خود DRF اشتباه گرفته نشود؛
+* `page_size` فقط روی viewی مستند می‌شود که به کلاینت اجازه‌ی انتخاب بدهد،
+  با سقفش به‌عنوان maximum؛
+* قالب خطا به‌عنوان یک component مشترک، `ErrorEnvelope`، که پاسخ `default`
+  همه‌ی عملیات‌هاست، و `ValidationErrorEnvelope`، با `data.fields`، که پاسخ 400
+  هر عملیاتی است که بدنه می‌گیرد - خطایی که خود view مستند کرده حفظ می‌شود.
+  فقط تا وقتی که `EXCEPTION_HANDLER` پروژه مال این کتابخانه است: در غیر این
+  صورت خطاها شکل خود DRF را دارند، و اسکیما شکل دیگری را قول نمی‌دهد.
+
+viewی که mixin ندارد همان‌طور که جواب می‌دهد مستند می‌شود - پاسخ‌های موفقش
+بدون قالب، و صفحه‌هایش در قالب، همان‌طور که paginatorها جواب می‌دهند. viewی که
+دستی با `success_response` جواب می‌دهد در عمل در قالب است و در اسکیما نیست:
+به آن mixin بدهید.
+
+نصب با `'DEFAULT_SCHEMA_CLASS': 'drf_parcel.schema.ParcelAutoSchema'`، یا با
+افزودن `ParcelSchemaMixin` به `AutoSchema` خود پروژه.
 
 فرانتی که تایپ‌هایش را از اسکیما می‌سازد آن وقت `response.data.id`
 می‌نویسد، که همان چیزی است که می‌رسد.

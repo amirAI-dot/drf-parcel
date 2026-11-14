@@ -324,7 +324,7 @@ class DomainError(APIException):
   the default language.
 
 The library ships the common ones - `InvalidInputError`,
-`AuthenticationFailedError`, `PermissionDeniedError`, `NotFoundError`,
+`InvalidCursorError`, `AuthenticationFailedError`, `PermissionDeniedError`, `NotFoundError`,
 `ConflictError`, `RateLimitedError`, `ServiceUnavailableError`.
 
 **A project's existing errors keep working.** Any subclass of DRF's
@@ -454,7 +454,7 @@ DRF_PARCEL = {
 
 | key | default | what it decides |
 |---|---|---|
-| `PAGE_SIZE` | `20` | the page size when a view names none |
+| `PAGE_SIZE` | `20` | the page size when a view names none. Left out, DRF's own `REST_FRAMEWORK['PAGE_SIZE']` is read when it is set - a project that set it there keeps its size - and only then `20` |
 | `MAX_PAGE_SIZE` | `100` | the ceiling on a size the client chooses |
 | `CLIENT_PAGE_SIZE` | `False` | whether the client may choose the size |
 | `PAGE_SIZE_QUERY_PARAM` | `'page_size'` | the parameter it chooses it with |
@@ -479,11 +479,27 @@ does not import, a code in `ERROR_CODES` the library does not have.
 With the `schema` extra (`pip install 'drf-parcel[schema]'`), the generated
 OpenAPI document says what the wire carries:
 
-* every 2xx answer inside the envelope - `data` is the serializer,
-  `pagination` the kind the view uses;
-* `page_size` documented only on a view that lets the client choose it;
-* the error envelope as one shared component, referenced by every
-  operation, with `data.fields` on the ones that validate input.
+* every 2xx answer of a view with `EnvelopeMixin` inside the envelope -
+  `data` is the serializer, and a delete is the 200 it answers;
+* a paged list as its own envelope, `pagination` the kind the view uses,
+  under a name that says the kind - `ItemPage`, `ItemCursorPage` - so it is
+  never mistaken for DRF's own `PaginatedItemList`;
+* `page_size` documented only on a view that lets the client choose it,
+  with its ceiling as the maximum;
+* the error envelope as one shared component, `ErrorEnvelope`, the
+  `default` answer of every operation, and `ValidationErrorEnvelope`, with
+  `data.fields`, the 400 of every operation that takes a body - a failure a
+  view documents itself is kept. Only while the project's
+  `EXCEPTION_HANDLER` is this library's: otherwise failures are DRF's
+  shape, and the schema promises no other.
+
+A view without the mixin is documented as it answers - its successes bare,
+its pages in the envelope, as the paginators answer them. One that answers
+with `success_response` by hand is in the envelope at runtime and not in
+the schema: give it the mixin.
+
+Install it with `'DEFAULT_SCHEMA_CLASS': 'drf_parcel.schema.ParcelAutoSchema'`,
+or mix `ParcelSchemaMixin` into a project's own `AutoSchema`.
 
 A frontend generating its types from the schema then writes
 `response.data.id`, which is what arrives.

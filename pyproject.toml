@@ -37,6 +37,8 @@ schema = ["drf-spectacular>=0.28"]
 
 [project.urls]
 Repository = "https://github.com/amirAI-dot/drf-parcel"
+Changelog = "https://github.com/amirAI-dot/drf-parcel/blob/main/CHANGELOG.md"
+Contract = "https://github.com/amirAI-dot/drf-parcel/blob/main/docs/contract.md"
 
 [dependency-groups]
 test = [
@@ -62,7 +64,7 @@ dev = [
 packages = ["src/drf_parcel"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "docs", "LICENSE", "README.md"]
+include = ["src", "tests", "docs", "LICENSE", "README.md", "README.fa.md", "CHANGELOG.md", "CHANGELOG.fa.md"]
 
 # ---------------------------------------------------------------- tests
 
@@ -90,7 +92,8 @@ fail_under = 100
 line-length = 100
 target-version = "py311"
 src = ["src", "tests"]
-extend-exclude = ["docs/*.md"]
+# The documents' examples are prose, laid out for reading rather than formatted.
+extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
 select = [

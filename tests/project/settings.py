@@ -23,9 +23,11 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'rest_framework',
     'drf_parcel',
+    'tests.project.shelf',
 ]
 
-MIDDLEWARE: list[str] = []
+# The language is the request's - Accept-Language - as in a project that speaks more than one.
+MIDDLEWARE = ['django.middleware.locale.LocaleMiddleware']
 
 ROOT_URLCONF = 'tests.project.urls'
 
@@ -37,6 +39,9 @@ REST_FRAMEWORK: dict[str, object] = {
     'DEFAULT_AUTHENTICATION_CLASSES': [],
     'DEFAULT_PERMISSION_CLASSES': [],
     'UNAUTHENTICATED_USER': None,
+    'DEFAULT_PAGINATION_CLASS': 'drf_parcel.pagination.PageNumberPagination',
+    'EXCEPTION_HANDLER': 'drf_parcel.handlers.exception_handler',
+    'DEFAULT_SCHEMA_CLASS': 'drf_parcel.schema.ParcelAutoSchema',
 }
 
 _DATABASES = {
