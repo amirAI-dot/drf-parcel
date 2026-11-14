@@ -55,7 +55,13 @@ def success_response(
     Without a ``message`` it says the default for its status - and, in a
     view with ``EnvelopeMixin``, the default for its request, which also
     knows the method.
+
+    A 204 carries no body by definition, so the envelope would be thrown
+    away: it is answered as a 200, which a client can read.
     """
+    if status_code == status.HTTP_204_NO_CONTENT:
+        status_code = status.HTTP_200_OK
+
     response = EnvelopeResponse(
         build_envelope(
             success=True,

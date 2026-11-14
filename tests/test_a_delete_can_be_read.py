@@ -25,3 +25,23 @@ def test_an_explicit_answer_to_a_delete_says_deleted(client: APIClient) -> None:
 
     assert response.status_code == 200
     assert response.json()['message'] == 'Deleted.'
+
+
+def test_an_explicit_204_is_answered_as_a_200_with_its_body(client: APIClient) -> None:
+    """success_response(status_code=204) built an envelope no client could read."""
+    response = client.delete('/no-content/')
+
+    assert response.status_code == 200
+    assert response.json() == {
+        'success': True,
+        'status_code': 200,
+        'message': 'Deleted.',
+        'data': {},
+    }
+
+
+def test_an_explicit_204_without_the_mixin_is_a_200_too(client: APIClient) -> None:
+    response = client.delete('/no-content/plain/')
+
+    assert response.status_code == 200
+    assert response.json()['status_code'] == 200

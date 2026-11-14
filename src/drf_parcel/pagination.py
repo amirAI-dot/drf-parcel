@@ -28,12 +28,13 @@ from django.db.models import QuerySet
 from rest_framework import pagination
 from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from drf_parcel import conf
 from drf_parcel.envelope import envelope_schema
 from drf_parcel.exceptions import InvalidCursorError
-from drf_parcel.responses import EnvelopeResponse, success_response
+from drf_parcel.responses import success_response
 
 #: The schema of a numbered page's ``pagination``.
 PAGE_SCHEMA: Final[dict[str, Any]] = {
@@ -84,7 +85,7 @@ class _PageSize:
     the same way, so a view overrides any one of them by naming it.
     """
 
-    #: None defers to the project: DRF's own PAGE_SIZE is not read here.
+    #: None defers to the project: DRF_PARCEL's PAGE_SIZE, else DRF's own.
     page_size: int | None = None
     max_page_size: int | None = None
     client_page_size: bool | None = None
@@ -126,6 +127,13 @@ class _PageSize:
                 }
 
         return parameters
+
+    def wraps(self) -> bool:
+        """
+        Whether a page is answered in the envelope: not in a view that opts
+        out with ``parcel_wrap = False``, which is answered as DRF answers.
+        """
+        return getattr(self.view, 'parcel_wrap', True) is not False
 
     def client_page_size_param(self) -> str | None:
         """The parameter a client chooses with - none where it may not choose."""
@@ -173,11 +181,18 @@ class PageNumberPagination(_PageSize, pagination.PageNumberPagination):
         self.page_size_query_param = self.client_page_size_param()
         return super().paginate_queryset(queryset, request, view)
 
-    def get_paginated_response(self, data: Any) -> EnvelopeResponse:
+    def get_paginated_response(self, data: Any) -> Response:
+        if not self.wraps():
+            return super().get_paginated_response(data)
+
         return success_response(data, pagination=self.pagination_meta())
 
     def get_paginated_response_schema(self, schema: dict[str, Any]) -> dict[str, Any]:
         """The envelope a page answers in: the rows under ``data``, the pager beside them."""
+        if not self.wraps():
+            drf_page: dict[str, Any] = super().get_paginated_response_schema(schema)
+            return drf_page
+
         return envelope_schema(schema, pagination=PAGE_SCHEMA)
 
     def pagination_meta(self) -> dict[str, Any]:
@@ -222,11 +237,18 @@ class CursorPagination(_PageSize, pagination.CursorPagination):
         except NotFound as unreadable:
             raise InvalidCursorError from unreadable
 
-    def get_paginated_response(self, data: Any) -> EnvelopeResponse:
+    def get_paginated_response(self, data: Any) -> Response:
+        if not self.wraps():
+            return super().get_paginated_response(data)
+
         return success_response(data, pagination=self.pagination_meta())
 
     def get_paginated_response_schema(self, schema: dict[str, Any]) -> dict[str, Any]:
         """The envelope a feed answers in: the rows under ``data``, the cursors beside them."""
+        if not self.wraps():
+            drf_page: dict[str, Any] = super().get_paginated_response_schema(schema)
+            return drf_page
+
         return envelope_schema(schema, pagination=CURSOR_SCHEMA)
 
     def pagination_meta(self) -> dict[str, Any]:

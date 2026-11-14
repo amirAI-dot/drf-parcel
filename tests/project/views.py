@@ -75,6 +75,20 @@ class TotalsView(EnvelopeMixin, APIView):
         return success_response()
 
 
+class NoContentView(EnvelopeMixin, APIView):
+    """A delete answered explicitly with a 204 - which no client could read."""
+
+    def delete(self, request: Request) -> Response:
+        return success_response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+class PlainNoContentView(APIView):
+    """The same, in a view without the mixin."""
+
+    def delete(self, request: Request) -> Response:
+        return success_response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 class ExplainedView(EnvelopeMixin, APIView):
     """Answers that carry a header, a cookie, a failure or a value that is not an object."""
 

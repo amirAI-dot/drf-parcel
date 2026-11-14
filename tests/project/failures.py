@@ -55,6 +55,9 @@ FAILURES: dict[str, Any] = {
     'http404': lambda: Http404('No Patient matches the given query.'),
     'django-permission': DjangoPermissionDenied,
     'drf-permission': exceptions.PermissionDenied,
+    'django-permission-message': lambda: DjangoPermissionDenied(
+        'You may only edit your own orders.'
+    ),
     'django-validation': lambda: DjangoValidationError(
         {'phone': [DjangoValidationError('Enter a valid phone number.', code='invalid')]}
     ),

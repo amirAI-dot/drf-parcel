@@ -12,7 +12,14 @@ from rest_framework.routers import SimpleRouter
 
 from drf_parcel.responses import EnvelopeMixin
 from tests.project.shelf.models import Item
-from tests.project.shelf.views import Feed, ItemSerializer, PlainItemList, SizedItemList
+from tests.project.shelf.views import (
+    Feed,
+    ItemSerializer,
+    OptedOutFeed,
+    OptedOutItemList,
+    PlainItemList,
+    SizedItemList,
+)
 from tests.project.views import CsvRenderer
 
 
@@ -109,5 +116,7 @@ urlpatterns = [
     path('loose/', LooseListView.as_view()),
     path('hidden/<int:pk>/', HiddenView.as_view()),
     path('drf-paged/', DrfPagedItemList.as_view()),
+    path('opted-out-list/', OptedOutItemList.as_view()),
+    path('opted-out-feed/', OptedOutFeed.as_view()),
     *router.urls,
 ]

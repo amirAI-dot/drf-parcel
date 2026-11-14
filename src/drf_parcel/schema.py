@@ -35,6 +35,7 @@ This is the only module that imports drf-spectacular: it is the ``schema``
 extra, and nothing else needs it.
 """
 
+import inspect
 from typing import Any, Final
 
 from drf_spectacular.openapi import AutoSchema
@@ -63,9 +64,10 @@ class ParcelSchemaMixin:
     # Set by drf-spectacular before an operation is described.
     view: Any
     registry: Any
+    _parcel_pages: set[str]
 
     def get_operation(self, *args: Any, **kwargs: Any) -> dict[str, Any] | None:
-        self._parcel_pages: set[str] = set()
+        self._parcel_pages = set()
         operation: dict[str, Any] | None = super().get_operation(*args, **kwargs)  # type: ignore[misc]
 
         if operation is None:
@@ -74,7 +76,7 @@ class ParcelSchemaMixin:
         responses = operation['responses']
 
         if _wraps(self.view):
-            _wrap_successes(responses, self._parcel_pages)
+            _wrap_successes(responses, self._pages())
 
         if _handler_is_installed():
             self._document_failures(operation, responses)
@@ -86,22 +88,45 @@ class ParcelSchemaMixin:
         The name of a page's component: ``ItemPage``, ``ItemCursorPage``.
 
         Named apart from drf-spectacular's ``PaginatedItemList``, which a view
-        paged by DRF's own paginator still gets, as their shapes differ. A
-        page of this library's is already the whole envelope, so it is
-        remembered and not wrapped a second time.
+        paged by DRF's own paginator still gets - and a view that opts out,
+        whose pages are DRF's shape - as their shapes differ. A page of this
+        library's is already the whole envelope, so it is remembered and not
+        wrapped a second time.
         """
-        paginator = self._get_paginator()  # type: ignore[attr-defined]
+        paginator = self._get_paginator()
 
-        if isinstance(paginator, PageNumberPagination):
-            name = f'{serializer_name}Page'
-        elif isinstance(paginator, CursorPagination):
-            name = f'{serializer_name}CursorPage'
-        else:
+        if not isinstance(paginator, PageNumberPagination | CursorPagination) or not (
+            paginator.wraps()
+        ):
             drf_page: str = super().get_paginated_name(serializer_name)  # type: ignore[misc]
             return drf_page
 
-        self._parcel_pages.add(name)
+        if isinstance(paginator, PageNumberPagination):
+            name = f'{serializer_name}Page'
+        else:
+            name = f'{serializer_name}CursorPage'
+
+        self._pages().add(name)
         return name
+
+    def _get_paginator(self) -> Any:
+        """The view's paginator, told which view it serves - so it knows if the view opted out."""
+        paginator = super()._get_paginator()  # type: ignore[misc]
+
+        if isinstance(paginator, PageNumberPagination | CursorPagination):
+            paginator.view = self.view
+
+        return paginator
+
+    def _pages(self) -> set[str]:
+        """
+        The names of this operation's pages that are already the envelope.
+
+        Kept on the instance, and made when first asked for: drf-spectacular
+        may name a page outside ``get_operation``.
+        """
+        pages: set[str] = vars(self).setdefault('_parcel_pages', set())
+        return pages
 
     def _document_failures(self, operation: dict[str, Any], responses: dict[str, Any]) -> None:
         responses.setdefault(
@@ -136,7 +161,11 @@ def _wraps(view: Any) -> bool:
 
 
 def _handler_is_installed() -> bool:
-    return bool(api_settings.EXCEPTION_HANDLER is exception_handler)
+    """
+    Whether failures are answered by this library's handler - directly, or by
+    a project's own that calls it and says so with ``functools.wraps``.
+    """
+    return inspect.unwrap(api_settings.EXCEPTION_HANDLER) is exception_handler
 
 
 def _wrap_successes(responses: dict[str, Any], pages: set[str]) -> None:
