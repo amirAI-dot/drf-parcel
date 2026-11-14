@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'rest_framework',
     'drf_parcel',
+    'tests.project.shelf',
 ]
 
 MIDDLEWARE: list[str] = []
@@ -37,6 +38,7 @@ REST_FRAMEWORK: dict[str, object] = {
     'DEFAULT_AUTHENTICATION_CLASSES': [],
     'DEFAULT_PERMISSION_CLASSES': [],
     'UNAUTHENTICATED_USER': None,
+    'DEFAULT_PAGINATION_CLASS': 'drf_parcel.pagination.PageNumberPagination',
 }
 
 _DATABASES = {
