@@ -1,0 +1,66 @@
+# Publishing a release to PyPI, when a release is published on GitHub.
+#
+# The version is the one in pyproject.toml, and the tag must name it. PyPI
+# is reached by trusted publishing - no token is stored here: the project on
+# PyPI names this repository, this workflow and the `pypi` environment.
+
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The release's tag, such as v0.1.0
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and check the package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ inputs.tag || github.ref_name }}
+      - uses: astral-sh/setup-uv@v7
+
+      - name: The tag names the version being published
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          version=$(grep -m1 '^version = ' pyproject.toml | cut -d'"' -f2)
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::The tag $TAG does not name the version in pyproject.toml, $version."
+            exit 1
+          fi
+
+      # The wheel installed alone, with its catalogue in it.
+      - run: uvx nox --download-python auto -s package
+
+      - run: uv build
+      - run: uvx twine check --strict dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/drf-parcel/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
