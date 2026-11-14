@@ -265,22 +265,50 @@ from drf_parcel.exceptions import DomainError
 
 class ProvinceInUse(DomainError):
     status_code = 409
-    error_code = 'province_in_use'
-    default_message = _('This province has branches and cannot be deleted.')
+    default_code = 'province_in_use'
+    default_detail = _('This province has branches and cannot be deleted.')
 
 raise ProvinceInUse(data={'branches': 3})
 raise ProvinceInUse(_('Move its 3 branches first.'), data={'branches': 3})
 ```
 
-`DomainError` از DRF نمی‌آید: سرویس آن را raise می‌کند، و قانون برقرار
-می‌ماند چه از view برسد، چه از تسک Celery، چه از management command.
+**`DomainError` همان `APIException` خود DRF است**، با یک چیز اضافه: `data`.
+اسم‌هایش اسم‌های خود DRF هستند - `status_code`، `default_code` (که به‌عنوان
+`error_code` فرستاده می‌شود)، `default_detail` (که به‌عنوان `message`
+فرستاده می‌شود) - پس چیز تازه‌ای برای یاد گرفتن نیست، و یک نوع خطا داریم، نه
+دو نوع.
+
+```python
+class DomainError(APIException):
+    status_code = 400
+    default_code = 'error'
+    default_detail = _('The request could not be completed.')
+
+    def __init__(self, detail=None, code=None, *, data=None):
+        super().__init__(detail, code)
+        self.data = data or {}
+```
+
+* **بدون handler این کتابخانه هم کار می‌کند.** پروژه‌ای که mixin را نصب
+  کرده و handler خود DRF را نگه داشته، باز هم کد وضعیت درست، `set_rollback`
+  و یک جواب معقول می‌گیرد - نه 500.
+* **یک exception معمولی هم هست.** سرویس آن را raise می‌کند، و تسک Celery یا
+  management command آن را مثل هر exception دیگری catch می‌کند.
+* **rollback کار handler است، نه کار کلاس.** handler خود DRF تابع
+  `set_rollback` را صدا می‌زند؛ این کتابخانه آن handler را جایگزین می‌کند،
+  پس handler خودش آن را صدا می‌زند، در همه‌ی مسیرها (۳.۶).
+* **پیام همان لحظه‌ی raise شدن به متن تبدیل می‌شود**، همان‌طور که DRF
+  می‌کند - داخل یک درخواست، به زبان همان درخواست. خطایی که بیرون از درخواست
+  raise شود به زبان پیش‌فرض است.
+
 کتابخانه خطاهای رایج را همراه خودش دارد - `ValidationFailedError`،
 `AuthenticationFailedError`، `PermissionDeniedError`، `NotFoundError`،
 `ConflictError`، `RateLimitedError`، `ServiceUnavailableError`.
 
-**خطاهای فعلی پروژه همچنان کار می‌کنند.** هر زیرکلاس `APIException` در DRF
-بدون هیچ تغییری در قالب جواب می‌دهد: `status_code` خودش، `default_code`
-خودش به‌عنوان `error_code`، و `detail` خودش به‌عنوان `message`.
+**خطاهای فعلی پروژه همچنان کار می‌کنند.** هر زیرکلاس `APIException` در DRF،
+چه از `DomainError` باشد چه نه، بدون هیچ تغییری در قالب جواب می‌دهد:
+`status_code` خودش، `default_code` خودش به‌عنوان `error_code`، `detail` خودش
+به‌عنوان `message`، و `data` اگر داشته باشد.
 
 ### ۳.۴ چیزی که هرگز گفته نمی‌شود
 

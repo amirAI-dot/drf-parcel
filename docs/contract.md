@@ -262,22 +262,49 @@ from drf_parcel.exceptions import DomainError
 
 class ProvinceInUse(DomainError):
     status_code = 409
-    error_code = 'province_in_use'
-    default_message = _('This province has branches and cannot be deleted.')
+    default_code = 'province_in_use'
+    default_detail = _('This province has branches and cannot be deleted.')
 
 raise ProvinceInUse(data={'branches': 3})
 raise ProvinceInUse(_('Move its 3 branches first.'), data={'branches': 3})
 ```
 
-`DomainError` does not come from DRF: a service raises it, and the rule
-holds whether it is reached from a view, a Celery task or a management
-command. The library ships the common ones - `ValidationFailedError`,
+**`DomainError` is DRF's `APIException`**, with one thing added: `data`.
+Its names are DRF's own - `status_code`, `default_code` (sent as
+`error_code`), `default_detail` (sent as `message`) - so there is nothing
+new to learn, and there is one kind of error, not two.
+
+```python
+class DomainError(APIException):
+    status_code = 400
+    default_code = 'error'
+    default_detail = _('The request could not be completed.')
+
+    def __init__(self, detail=None, code=None, *, data=None):
+        super().__init__(detail, code)
+        self.data = data or {}
+```
+
+* **It works without this library's handler.** A project that installs the
+  mixin and keeps DRF's own handler still gets the right status, its
+  `set_rollback`, and a sensible answer - not a 500.
+* **It is an ordinary exception too.** A service raises it, and a Celery
+  task or a management command catches it like any other.
+* **The rollback is the handler's, not the class's.** DRF's own handler
+  calls `set_rollback`; this library replaces that handler, so its handler
+  calls it itself, on every path (3.6).
+* **The message is made text when it is raised**, as DRF does - in the
+  request's language inside a request. One raised outside a request is in
+  the default language.
+
+The library ships the common ones - `ValidationFailedError`,
 `AuthenticationFailedError`, `PermissionDeniedError`, `NotFoundError`,
 `ConflictError`, `RateLimitedError`, `ServiceUnavailableError`.
 
-**A project's existing errors keep working.** A subclass of DRF's
-`APIException` answers in the envelope with no change: its `status_code`,
-its `default_code` as `error_code`, its `detail` as `message`.
+**A project's existing errors keep working.** Any subclass of DRF's
+`APIException`, `DomainError` or not, answers in the envelope with no
+change: its `status_code`, its `default_code` as `error_code`, its
+`detail` as `message`, and `data` when it has one.
 
 ### 3.4 What is never said
 
