@@ -1,0 +1,32 @@
+name: Bug report
+description: An answer that is not what the contract says it should be.
+labels: [bug]
+body:
+  - type: textarea
+    id: view
+    attributes:
+      label: The view
+      description: The smallest view, serializer and settings that show it.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: answered
+    attributes:
+      label: What it answered
+      description: The request, and the JSON that came back.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      placeholder: drf-parcel 0.1.0, Django 6.1, DRF 3.18, Python 3.13
+    validations:
+      required: true

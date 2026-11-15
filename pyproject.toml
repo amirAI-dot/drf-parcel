@@ -12,7 +12,22 @@ license-files = ["LICENSE"]
 authors = [{ name = "amir mohammad kashanchian" }]
 requires-python = ">=3.11"
 dependencies = ["Django>=5.2", "djangorestframework>=3.16"]
-keywords = ["django", "djangorestframework", "drf", "api", "response", "envelope", "pagination", "errors"]
+keywords = [
+    "django",
+    "djangorestframework",
+    "django-rest-framework",
+    "drf",
+    "rest-api",
+    "api-response",
+    "response-format",
+    "envelope",
+    "pagination",
+    "cursor-pagination",
+    "exception-handler",
+    "error-handling",
+    "openapi",
+    "drf-spectacular",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Web Environment",
@@ -21,6 +36,8 @@ classifiers = [
     "Framework :: Django :: 6.0",
     "Framework :: Django :: 6.1",
     "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Natural Language :: Persian",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
@@ -29,6 +46,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
 

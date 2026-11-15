@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://amirai-dot.github.io/drf-parcel/
+    about: The quickstart, how-to guides, every error code and setting.
+  - name: Questions
+    url: https://amirai-dot.github.io/drf-parcel/faq/
+    about: What people ask first.
+  - name: A security problem
+    url: https://github.com/amirAI-dot/drf-parcel/security/advisories/new
+    about: Report it privately, not in an issue.

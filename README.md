@@ -1,7 +1,18 @@
 # drf-parcel
 
+[![PyPI](https://img.shields.io/pypi/v/drf-parcel)](https://pypi.org/project/drf-parcel/)
+[![Python](https://img.shields.io/pypi/pyversions/drf-parcel)](https://pypi.org/project/drf-parcel/)
+[![Django](https://img.shields.io/pypi/frameworkversions/django/drf-parcel?label=django)](https://pypi.org/project/drf-parcel/)
+[![CI](https://github.com/amirAI-dot/drf-parcel/actions/workflows/ci.yml/badge.svg)](https://github.com/amirAI-dot/drf-parcel/actions/workflows/ci.yml)
+[![Docs](https://github.com/amirAI-dot/drf-parcel/actions/workflows/docs.yml/badge.svg)](https://amirai-dot.github.io/drf-parcel/)
+[![License](https://img.shields.io/pypi/l/drf-parcel)](https://github.com/amirAI-dot/drf-parcel/blob/main/LICENSE)
+
 One response shape for a Django REST framework API - success, page and error
 alike - and the generated schema saying exactly that shape.
+
+A standard JSON response format for DRF: every success, every page - by
+number or by cursor - and every error in the same envelope, from one
+exception handler, with drf-spectacular describing it in the OpenAPI schema.
 
 [فارسی](https://github.com/amirAI-dot/drf-parcel/blob/main/README.fa.md)
 
