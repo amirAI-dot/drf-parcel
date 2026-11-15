@@ -1,6 +1,7 @@
 """Lists of items, paged each way a project pages them."""
 
 from rest_framework import generics, serializers
+from rest_framework.filters import OrderingFilter
 
 from drf_parcel.pagination import CursorPagination, PageNumberPagination
 from drf_parcel.responses import EnvelopeMixin
@@ -85,3 +86,16 @@ class OptedOutItemList(ItemList):
 
 class OptedOutFeed(Feed):
     parcel_wrap = False
+
+
+class NumberedFeed(Feed):
+    """A feed ordered by a number - where a cursor's position must be one."""
+
+    ordering = '-id'
+
+
+class SortableFeed(Feed):
+    """A feed whose order the client chooses, as a table with sortable columns does."""
+
+    filter_backends = (OrderingFilter,)
+    ordering_fields = ('id', 'name', 'created_at')

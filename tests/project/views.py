@@ -9,7 +9,9 @@ from collections.abc import Mapping
 from typing import Any, ClassVar
 
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.cache import cache_page
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.renderers import BaseRenderer, JSONRenderer
@@ -126,6 +128,17 @@ class PlainView(APIView):
 
     def put(self, request: Request) -> Response:
         return Response({'total': 12})
+
+
+class CountedView(EnvelopeMixin, APIView):
+    """An answer that costs something to make, cached as DRF's documentation shows."""
+
+    asked = 0
+
+    @method_decorator(cache_page(60))
+    def get(self, request: Request) -> Response:
+        type(self).asked += 1
+        return Response({'asked': type(self).asked})
 
 
 class OptedOutView(EnvelopeMixin, APIView):

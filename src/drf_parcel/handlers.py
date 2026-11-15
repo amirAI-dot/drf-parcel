@@ -28,6 +28,7 @@ from functools import cache
 from typing import Any, Final
 
 from django.conf import settings
+from django.core.exceptions import NON_FIELD_ERRORS
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
@@ -39,7 +40,6 @@ from rest_framework.fields import get_error_detail
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import exception_handler as drf_exception_handler
-from rest_framework.views import set_rollback
 
 from drf_parcel import conf
 from drf_parcel.integrity import kind_of
@@ -108,7 +108,17 @@ def _as_drf(exc: Exception) -> Exception:
 
     if isinstance(exc, DjangoValidationError):
         # The codes Django gave each message - 'required', 'unique' - are kept.
-        return exceptions.ValidationError(get_error_detail(exc))
+        detail = get_error_detail(exc)
+
+        if isinstance(detail, dict) and NON_FIELD_ERRORS in detail:
+            # A model's clean() files what belongs to no field under Django's
+            # key, '__all__'; a client reads it under DRF's, as from a serializer.
+            own = str(api_settings.NON_FIELD_ERRORS_KEY)
+            detail = {
+                (own if key == NON_FIELD_ERRORS else key): found for key, found in detail.items()
+            }
+
+        return exceptions.ValidationError(detail)
 
     return exc
 
@@ -239,8 +249,10 @@ def _failure(
     *,
     data: Mapping[str, Any] | None = None,
 ) -> EnvelopeResponse:
-    """A failure in the envelope, under the project's name for its code, its write undone."""
-    set_rollback()
+    """
+    A failure in the envelope, under the project's name for its code - and its
+    write undone: ``error_response`` marks the transaction for rollback.
+    """
     return error_response(
         message=message,
         error_code=_renamed(code),

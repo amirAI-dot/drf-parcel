@@ -4,6 +4,21 @@
 
 ## Unreleased
 
+Fixed:
+
+* **A cursor that decodes and still cannot be used is a 400
+  `invalid_cursor`**, as the contract says of every cursor the server cannot
+  read. One written by hand, or kept while the list was re-sorted by another
+  column, was a 500 - logged and reported as a bug - or a `validation_error`.
+* **A view cached with `cache_page` on its method is cached again.** Wrapping
+  the answer left the cache waiting for a response that was never rendered,
+  so every request reached the view.
+* **`error_response` marks the request's transaction for rollback**, as a
+  raised failure does. Under `ATOMIC_REQUESTS`, what a view wrote before it
+  returned a failure was kept.
+* **What a model's `clean()` refuses is under `non_field_errors`**, not under
+  Django's own key, `__all__`.
+
 ## 0.1.0 - 2026-11-14 - the first release
 
 Everything [the contract](https://github.com/amirAI-dot/drf-parcel/blob/main/docs/contract.md) says, built.

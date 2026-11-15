@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.views import set_rollback
 
 from drf_parcel.envelope import build_envelope
 from drf_parcel.messages import default_message
@@ -85,7 +86,14 @@ def error_response(
     data: Any = None,
     headers: Mapping[str, str] | None = None,
 ) -> EnvelopeResponse:
-    """A failure, in the envelope."""
+    """
+    A failure, in the envelope.
+
+    It marks the request's transaction for rollback, as raising does: under
+    ``ATOMIC_REQUESTS``, what a view wrote before it answered a failure is
+    undone, whether the failure was raised or returned.
+    """
+    set_rollback()
     return EnvelopeResponse(
         build_envelope(
             success=False,
@@ -167,6 +175,12 @@ class EnvelopeMixin(_ViewBase):
 
         for name, cookie in response.cookies.items():
             wrapped.cookies[name] = cookie
+
+        # What was to happen once the answer is rendered - ``cache_page`` storing
+        # it - happens to the answer that is rendered, which is the wrapped one.
+        # Django's own list, which its stubs do not name.
+        for callback in response._post_render_callbacks:  # type: ignore[attr-defined]
+            wrapped.add_post_render_callback(callback)
 
         return wrapped
 
