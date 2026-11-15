@@ -152,7 +152,9 @@ class _PageSize:
 
         The view's size, unless the client may choose and chose one it can
         have: a size above the ceiling is the ceiling, and nothing, zero, a
-        negative number or a word is the view's size.
+        negative number or a word is the view's size. So is any size under
+        a ceiling that is not above zero - a ceiling of nothing would be no
+        page at all, which DRF reads as a list that is not paged.
         """
         size: int = self._setting('page_size')
         param = self.client_page_size_param()
@@ -169,6 +171,10 @@ class _PageSize:
             return size
 
         ceiling: int = self._setting('max_page_size')
+
+        if ceiling < 1:
+            return size
+
         return min(asked, ceiling)
 
 

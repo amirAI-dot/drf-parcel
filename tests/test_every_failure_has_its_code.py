@@ -136,3 +136,14 @@ def test_a_renaming_that_cannot_work_never_breaks_the_answer(
 @override_settings(DRF_PARCEL={'ERROR_CODES': {'not_found': 'missing'}})
 def test_a_projects_own_code_is_not_renamed(client: APIClient) -> None:
     assert client.get('/fail/domain/').json()['error_code'] == 'province_in_use'
+
+
+def test_a_refusal_raised_with_the_code_invalid_is_not_called_a_validation_error(
+    client: APIClient,
+) -> None:
+    """A client told validation_error looks for data.fields, and a refusal has none."""
+    response = client.get('/fail/refused-as-invalid/')
+
+    assert response.status_code == 403
+    assert response.json()['error_code'] == 'invalid'
+    assert response.json()['data'] == {}

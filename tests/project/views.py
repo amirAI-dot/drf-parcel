@@ -141,6 +141,13 @@ class CountedView(EnvelopeMixin, APIView):
         return Response({'asked': type(self).asked})
 
 
+class OwnTypeView(EnvelopeMixin, APIView):
+    """A view that names the type of its JSON itself, as a versioned API does."""
+
+    def get(self, request: Request) -> Response:
+        return Response({'total': 12}, content_type='application/vnd.shop.v2+json')
+
+
 class OptedOutView(EnvelopeMixin, APIView):
     """A webhook whose caller expects a shape of its own."""
 

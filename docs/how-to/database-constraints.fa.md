@@ -18,3 +18,12 @@ DRF_PARCEL = {'HANDLE_INTEGRITY_ERRORS': True}
 SQLite، MySQL - هرگز از متن خطا، و نه متن و نه اسم یک ستون از سرور بیرون
 نمی‌رود. اینکه کدام فیلد تکراری است را serializer باید بگوید: تور ایمنی برای
 رقابتی است که serializer نمی‌تواند ببیند.
+
+!!! note "PostgreSQL، کلید خارجی و `ATOMIC_REQUESTS`"
+
+    Django کلید خارجی را روی PostgreSQL *deferred* می‌سازد: دیتابیس آن را هنگام
+    commit تراکنش بررسی می‌کند، نه هنگام نوشتن ردیف. با `ATOMIC_REQUESTS` این
+    لحظه بعد از پاسخ view است، پس خطا هرگز به DRF نمی‌رسد - 500 خود Django
+    است، [بیرون از کتابخانه](../contract.md#outside-drf). پاسخ 409 `conflict`
+    جایی داده می‌شود که نوشتن درون خود view commit شود: بدون `ATOMIC_REQUESTS`،
+    یا در یک بلوک `transaction.atomic()` از خود view یا service.

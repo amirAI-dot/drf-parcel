@@ -80,6 +80,16 @@ class TheShopAnswersInOneShape(TestCase):
         self.assertEqual(answer['message'], 'The stock was updated.')
         self.assertEqual(answer['data']['stock'], 7)
 
+    def test_a_restock_that_is_no_number_is_a_validation_error(self) -> None:
+        for quantity in ('many', -5, None):
+            response = self.client.post(
+                f'/api/products/{self.ring.pk}/restock/', {'quantity': quantity}, format='json'
+            )
+
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.json()['error_code'], 'validation_error')
+            self.assertIn('quantity', response.json()['data']['fields'])
+
     def test_the_health_check_keeps_its_own_shape(self) -> None:
         self.assertEqual(self.client.get('/api/health/').json(), {'ok': True})
 

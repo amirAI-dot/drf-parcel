@@ -53,3 +53,12 @@ def test_an_error_whose_detail_is_a_dictionary_says_its_first_sentence(client: A
 
 def test_an_error_with_an_empty_detail_says_its_class_sentence(client: APIClient) -> None:
     assert client.get('/fail/legacy-empty/').json()['message'] == 'Pay first.'
+
+
+def test_an_error_whose_class_names_no_code_still_answers_in_the_envelope(
+    client: APIClient,
+) -> None:
+    response = client.get('/fail/legacy-nameless/')
+
+    assert response.status_code == 402
+    assert response.json()['error_code'] == 'error'

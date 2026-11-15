@@ -98,3 +98,15 @@ def test_the_librarys_page_size_wins_over_drfs(client: APIClient, make_items: Ma
     make_items(30)
 
     assert client.get('/items/').json()['pagination']['page_size'] == 10
+
+
+def test_a_ceiling_of_nothing_does_not_hand_over_the_whole_list(
+    client: APIClient, make_items: MakeItems
+) -> None:
+    """A page of no rows is, to DRF, a list that is not paged: every row there is."""
+    make_items(20)
+
+    answer = client.get('/items/no-ceiling/', {'page_size': '5'}).json()
+
+    assert answer['pagination']['page_size'] == 3
+    assert len(answer['data']) == 3
