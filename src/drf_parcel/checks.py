@@ -12,9 +12,16 @@ from django.apps import AppConfig
 from django.core.checks import CheckMessage, Error
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import import_string
+from rest_framework import pagination
 
 from drf_parcel import conf
 from drf_parcel.handlers import STANDARD_CODES
+
+#: The parameters the paginators read themselves: which page, and from where.
+_PAGINATORS_OWN_PARAMS = (
+    pagination.PageNumberPagination.page_query_param,
+    pagination.CursorPagination.cursor_query_param,
+)
 
 
 def check_settings(
@@ -70,6 +77,15 @@ def _page_size_problems() -> list[CheckMessage]:
             Error(
                 "DRF_PARCEL['PAGE_SIZE_QUERY_PARAM'] must be the name of a query parameter.",
                 id='drf_parcel.E005',
+            )
+        )
+    elif param in _PAGINATORS_OWN_PARAMS:
+        problems.append(
+            Error(
+                f"DRF_PARCEL['PAGE_SIZE_QUERY_PARAM'] is {param!r}, which a paginator "
+                f'already reads for something else.',
+                hint='A request for page 2 would also be a request for a page of two rows.',
+                id='drf_parcel.E011',
             )
         )
 

@@ -18,6 +18,20 @@ Fixed:
   returned a failure was kept.
 * **What a model's `clean()` refuses is under `non_field_errors`**, not under
   Django's own key, `__all__`.
+* **A failure raised with the code `invalid` keeps it.** Only a validation
+  error is a `validation_error`; a refusal that carried `invalid` was sent as
+  one, with no `data.fields`.
+* **A failure whose class names no code answers in the envelope**, with DRF's
+  own code, `error`, rather than as Django's 500.
+* **A ceiling that is not above zero is no ceiling to choose under.** A view
+  with `max_page_size = 0` answered the whole list, unpaged, to a client that
+  sent a `page_size`; it now answers its own page size.
+* **A type a view names with `Response(content_type=...)` is kept** when the
+  answer is wrapped.
+* **`PAGE_SIZE_QUERY_PARAM` set to `page` or `cursor` is reported at
+  start-up** (`drf_parcel.E011`): the paginators read those themselves.
+* The example's `restock` validates the quantity it is sent, and the guide to
+  database constraints says when PostgreSQL checks a foreign key.
 
 ## 0.1.0 - 2026-11-14 - the first release
 

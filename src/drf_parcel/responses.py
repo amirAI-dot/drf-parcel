@@ -168,6 +168,9 @@ class EnvelopeMixin(_ViewBase):
 
         wrapped = success_response(data, message=message, status_code=status_code)
 
+        # A type the view named itself - Response(content_type=...) - is still said.
+        wrapped.content_type = response.content_type
+
         # The view's own headers stay - all but the type, which the renderer says.
         for header, value in response.items():
             if header.lower() != 'content-type':

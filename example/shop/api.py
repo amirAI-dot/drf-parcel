@@ -32,6 +32,10 @@ class ProductSerializer(serializers.ModelSerializer[Product]):
         fields = ('id', 'name', 'price', 'stock')
 
 
+class RestockSerializer(serializers.Serializer[Any]):
+    quantity = serializers.IntegerField(min_value=1)
+
+
 # --8<-- [start:products]
 class ProductViewSet(EnvelopeMixin, viewsets.ModelViewSet[Product]):
     """Products, a numbered page at a time."""
@@ -53,7 +57,9 @@ class ProductViewSet(EnvelopeMixin, viewsets.ModelViewSet[Product]):
     def restock(self, request: Request, pk: str) -> Response:
         """Add to the stock - an answer written by hand, with a message of its own."""
         product = self.get_object()
-        product.stock += int(request.data.get('quantity', 0))
+        asked = RestockSerializer(data=request.data)
+        asked.is_valid(raise_exception=True)
+        product.stock += asked.validated_data['quantity']
         product.save(update_fields=['stock'])
         return success_response(
             ProductSerializer(product).data, message=_('The stock was updated.')

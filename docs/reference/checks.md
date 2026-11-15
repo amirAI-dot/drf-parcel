@@ -15,6 +15,7 @@ cannot work, before a client finds it.
 | `drf_parcel.E008` | `ERROR_CODES` is not a dictionary, renames a code the library does not send, or renames one to nothing | the hint lists the codes it sends |
 | `drf_parcel.E009` | `HANDLE_INTEGRITY_ERRORS` or `RAISE_UNHANDLED_IN_DEBUG` is not `True` or `False` | |
 | `drf_parcel.E010` | `REPORTER` is not the dotted path to a function | |
+| `drf_parcel.E011` | `PAGE_SIZE_QUERY_PARAM` is `page` or `cursor`, which a paginator already reads | choose another name |
 
 A check that fails does not stop a failure being answered: a renaming that
 cannot work is passed over by the handler, and the failure answered with the

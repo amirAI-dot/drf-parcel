@@ -38,6 +38,12 @@ class LegacyWithDataError(LegacyError):
         self.data = {'amount': 12}
 
 
+class NamelessError(LegacyError):
+    """An error whose class names no code at all."""
+
+    default_code = ''
+
+
 def raise_secret() -> None:
     raise RuntimeError('SELECT * FROM patients WHERE phone = 09120000000')
 
@@ -52,6 +58,10 @@ FAILURES: dict[str, Any] = {
     'legacy-data': LegacyWithDataError,
     'legacy-dict': lambda: LegacyError({'amount': ['Too little.']}),
     'legacy-empty': lambda: LegacyError([]),
+    'legacy-nameless': NamelessError,
+    'refused-as-invalid': lambda: exceptions.PermissionDenied(
+        'Your account is not valid for this.', code='invalid'
+    ),
     'http404': lambda: Http404('No Patient matches the given query.'),
     'django-permission': DjangoPermissionDenied,
     'drf-permission': exceptions.PermissionDenied,

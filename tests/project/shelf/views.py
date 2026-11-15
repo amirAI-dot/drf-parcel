@@ -99,3 +99,9 @@ class SortableFeed(Feed):
 
     filter_backends = (OrderingFilter,)
     ordering_fields = ('id', 'name', 'created_at')
+
+
+class NoCeilingItemList(SizedItemList):
+    """A view whose ceiling was set to nothing - a mistake, and no reason to read a table."""
+
+    max_page_size = 0

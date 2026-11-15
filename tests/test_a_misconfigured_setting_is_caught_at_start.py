@@ -61,6 +61,13 @@ def test_a_query_parameter_with_no_name(param: object) -> None:
         assert ids(check_settings()) == ['drf_parcel.E005']
 
 
+@pytest.mark.parametrize('param', ['page', 'cursor'])
+def test_a_query_parameter_a_paginator_already_reads(param: str) -> None:
+    """?page=2 would ask for the second page and for a page of two rows at once."""
+    with override_settings(DRF_PARCEL={'PAGE_SIZE_QUERY_PARAM': param}):
+        assert ids(check_settings()) == ['drf_parcel.E011']
+
+
 def test_the_check_runs_with_the_projects_checks() -> None:
     from django.core.checks import run_checks
 

@@ -66,8 +66,10 @@ STANDARD_CODES: Final = (
     'service_unavailable',
 )
 
-#: DRF's own codes the contract names otherwise.
-_RENAMED_FROM_DRF: Final = {'throttled': 'rate_limited', 'invalid': 'validation_error'}
+#: DRF's own code the contract names otherwise. A validation error's is not
+#: here: it is named where a validation error is answered, so a refusal that
+#: happens to carry the code 'invalid' is not mistaken for a form.
+_RENAMED_FROM_DRF: Final = {'throttled': 'rate_limited'}
 
 _ALREADY_EXISTS = _('This already exists.')
 _CHANGED_MEANWHILE = _('This was changed in the meantime. Please try again.')
@@ -151,8 +153,15 @@ def _answer_to(exc: exceptions.APIException, status_code: int) -> EnvelopeRespon
 
 
 def _code_of(exc: exceptions.APIException) -> str:
-    """The exception's own code: the one it was raised with, else its class's."""
-    code = getattr(exc.detail, 'code', None) or exc.default_code
+    """
+    The exception's own code: the one it was raised with, else its class's -
+    else DRF's own, for a class that names none: a failure is never without one.
+    """
+    code = (
+        getattr(exc.detail, 'code', None)
+        or exc.default_code
+        or exceptions.APIException.default_code
+    )
     return _RENAMED_FROM_DRF.get(code, code)
 
 
