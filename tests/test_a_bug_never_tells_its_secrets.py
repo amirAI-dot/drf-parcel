@@ -101,3 +101,37 @@ def test_a_reporter_that_fails_costs_a_log_line_not_the_answer(
 
     assert response.status_code == 500
     assert any('REPORTER' in record.getMessage() for record in caplog.records)
+
+
+@override_settings(DRF_PARCEL={'REPORTER': 'tests.test_a_bug_never_tells_its_secrets.reporter'})
+@pytest.mark.parametrize(
+    ('how', 'status_code', 'code'),
+    [('designed-500', 500, 'upstream_failed'), ('designed-503', 503, 'service_unavailable')],
+)
+def test_a_5xx_raised_on_purpose_is_logged_and_reported_too(
+    client: APIClient, caplog: pytest.LogCaptureFixture, how: str, status_code: int, code: str
+) -> None:
+    """
+    The server failing is the server failing, raised on purpose or not: nobody
+    hears of a payment provider that stopped answering if it is never logged.
+    """
+    REPORTED.clear()
+
+    with caplog.at_level(logging.ERROR, logger='drf_parcel'):
+        response = client.get(f'/fail/{how}/')
+
+    assert response.status_code == status_code
+    assert response.json()['error_code'] == code
+    [record] = [record for record in caplog.records if record.name == 'drf_parcel']
+    assert record.getMessage() == f'A {status_code} answered in FailingView'
+    assert record.exc_info is not None
+    assert len(REPORTED) == 1
+
+
+def test_a_5xx_raised_on_purpose_says_the_sentence_it_was_raised_with(
+    client: APIClient,
+) -> None:
+    """A designed 5xx is not a bug's text: its sentence was written to be read."""
+    assert client.get('/fail/designed-500/').json()['message'] == (
+        'The payment provider did not answer.'
+    )

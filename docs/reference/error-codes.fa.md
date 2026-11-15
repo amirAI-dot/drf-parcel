@@ -8,7 +8,7 @@
 |---|---|---|---|
 | 400 | `validation_error` | serializer، `ValidationError` خود Django، `InvalidInputError` | `fields`: همه‌ی مشکل‌ها، بر اساس مسیر تخت فیلدشان |
 | 400 | `parse_error` | بدنه‌ای که JSON معتبر نیست | `{}` |
-| 400 | `invalid_cursor` | cursorی که سرور نمی‌تواند بخواند | `{}` |
+| 400 | `invalid_cursor` | cursorی که سرور نمی‌تواند بخواند، دستی عوض شده، با کلید دیگری امضا شده، یا برای ترتیب دیگری ساخته شده | `{}` |
 | 401 | `not_authenticated` | اطلاعات ورود فرستاده نشده. 403، همان‌طور که DRF جواب می‌دهد، وقتی اولین کلاس احراز هویت view هدر `WWW-Authenticate` نمی‌فرستد - احراز هویت با session | `{}` |
 | 401 | `authentication_failed` | اطلاعات ورود اشتباه یا منقضی | `{}` |
 | 403 | `permission_denied` | `PermissionDenied` در DRF یا Django، با جمله‌ای که با آن raise شده | `{}` |
@@ -19,7 +19,7 @@
 | 409 | `conflict` | قید foreign key، با `HANDLE_INTEGRITY_ERRORS`؛ `ConflictError` | `{}` |
 | 415 | `unsupported_media_type` | بدنه‌ای از نوعی که view نمی‌خواند | `{}` |
 | 429 | `rate_limited` | محدودیت تعداد درخواست؛ `Retry-After` همان را می‌گوید | `retry_after`، به ثانیه |
-| 500 | `internal_error` | هر چیزی که کسی طراحی‌اش نکرده | `{}` |
+| 500 | `internal_error` | هر چیزی که کسی طراحی‌اش نکرده - و مثل هر 5xx دیگری، لاگ و گزارش می‌شود | `{}` |
 | 503 | `service_unavailable` | `ServiceUnavailableError` | `{}` |
 
 خطای خود پروژه `default_code` خودش را می‌فرستد، و `data`ای که با آن raise
@@ -37,3 +37,8 @@
 `invalid`، `max_length`، `min_length`، `max_value`، `min_value`، `unique`،
 `does_not_exist`، `incorrect_type`، `invalid_choice` و بقیه - یا کدی که
 validator پروژه با آن raise کرده.
+
+مسیر، اسم فیلدهاست که با `FIELD_PATH_SEPARATOR` به هم وصل شده‌اند. کلیدهای یک
+`DictField` مال کلاینت‌اند، پس کلیدی که جداکننده را در خود دارد - `"a.b"` - مسیری
+می‌سازد که شبیه یک فیلد تودرتو خوانده می‌شود؛ اگر کلیدهای پروژه ممکن است نقطه
+داشته باشند، جداکننده‌ی دیگری انتخاب کنید.

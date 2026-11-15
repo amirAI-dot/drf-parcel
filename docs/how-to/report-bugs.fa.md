@@ -16,10 +16,16 @@ def report(exc, context):
     sentry_sdk.capture_exception(exc)
 ```
 
-`context` همان context خود DRF است - `view` و `request`. reporter با هر 500
-صدا زده می‌شود و هرگز با خطایی که کسی طراحی کرده: یک 404، یک شماره‌ی تلفن
-اشتباه یا یک `DomainError` باگ نیست، و گزارش نمی‌شود. reporterی که خراب باشد
-فقط یک خط لاگ هزینه دارد، نه پاسخ را.
+`context` همان context خود DRF است - `view` و `request`. reporter با هر 5xx
+صدا زده می‌شود: یک باگ، و یک 5xx که عمداً raise شده هم - یک
+`ServiceUnavailableError`، یک `APIException` با وضعیت 500 - چون از کار افتادن
+سرور در هر دو حالت ارزش شنیدن دارد. یک 4xx هرگز گزارش نمی‌شود: یک 404، یک
+شماره‌ی تلفن اشتباه یا یک `DomainError` از کار افتادن سرور نیست. reporterی که
+خراب باشد فقط یک خط لاگ هزینه دارد، نه پاسخ را.
+
+یک 5xx عمدی پیامی را می‌گوید که با آن raise شده، پس آن پیام هرگز نباید متن
+یک exception باشد: `raise ServiceUnavailableError()`، نه
+`raise ServiceUnavailableError(str(error))`.
 
 !!! tip "یکپارچگی لاگ Sentry - یکی یا دیگری"
 

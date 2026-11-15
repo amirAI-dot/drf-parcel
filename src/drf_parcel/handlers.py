@@ -19,7 +19,8 @@ What it recognises, in order:
    logged with its traceback and reported. Under ``DEBUG`` it is raised
    instead, so Django's page shows it.
 
-Every failure answered marks the request's transaction for rollback.
+Every 5xx answered - a designed one too - is logged and reported, and
+every failure answered marks the request's transaction for rollback.
 """
 
 import logging
@@ -84,6 +85,12 @@ def exception_handler(exc: Exception, context: Mapping[str, Any]) -> Response | 
 
     if answered is not None:
         assert isinstance(exc, exceptions.APIException)
+
+        if answered.status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
+            # A 5xx somebody raised on purpose is still the server failing:
+            # it is logged and reported, though it says what it was raised with.
+            _record(exc, context, f'A {answered.status_code} answered in %s')
+
         return _carry_headers(answered, _answer_to(exc, answered.status_code))
 
     if isinstance(exc, IntegrityError) and conf.get('HANDLE_INTEGRITY_ERRORS'):
@@ -224,12 +231,15 @@ def _unexpected(exc: Exception, context: Mapping[str, Any]) -> Response | None:
     if settings.DEBUG and conf.get('RAISE_UNHANDLED_IN_DEBUG'):
         return None
 
-    view = context.get('view')
-    logger.error(
-        'Unhandled exception in %s', type(view).__name__ if view else 'a view', exc_info=exc
-    )
-    _report(exc, context)
+    _record(exc, context, 'Unhandled exception in %s')
     return _failure('internal_error', _SOMETHING_WENT_WRONG, status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def _record(exc: Exception, context: Mapping[str, Any], what: str) -> None:
+    """A 5xx, logged with its traceback and handed to the reporter."""
+    view = context.get('view')
+    logger.error(what, type(view).__name__ if view else 'a view', exc_info=exc)
+    _report(exc, context)
 
 
 def _report(exc: Exception, context: Mapping[str, Any]) -> None:

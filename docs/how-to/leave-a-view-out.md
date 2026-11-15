@@ -24,7 +24,8 @@ JSON:
 
 * a file, a PDF, a stream, a redirect;
 * a response from another renderer - a CSV, a template;
-* a failure a view made by hand, `Response({...}, status=400)`.
+* a failure a view made by hand, `Response({...}, status=400)`;
+* a `205 Reset Content`, which has no body to put an envelope in.
 
 ## A view without the mixin
 

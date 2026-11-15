@@ -58,8 +58,15 @@ def success_response(
     knows the method.
 
     A 204 carries no body by definition, so the envelope would be thrown
-    away: it is answered as a 200, which a client can read.
+    away: it is answered as a 200, which a client can read. A 205 tells the
+    client to clear its form and has no body either, and no 200 means that:
+    it is refused - answer ``Response(status=205)``.
     """
+    if status_code == status.HTTP_205_RESET_CONTENT:
+        raise ValueError(
+            'A 205 carries no body to put the envelope in: answer Response(status=205).'
+        )
+
     if status_code == status.HTTP_204_NO_CONTENT:
         status_code = status.HTTP_200_OK
 
@@ -91,7 +98,9 @@ def error_response(
 
     It marks the request's transaction for rollback, as raising does: under
     ``ATOMIC_REQUESTS``, what a view wrote before it answered a failure is
-    undone, whether the failure was raised or returned.
+    undone, whether the failure was raised or returned. It is for answering a
+    request: made inside a task's own atomic block, in a project with
+    ``ATOMIC_REQUESTS``, it would mark that block for rollback too.
     """
     set_rollback()
     return EnvelopeResponse(
@@ -198,7 +207,11 @@ class EnvelopeMixin(_ViewBase):
 
 
 def _is_success(response: Response) -> bool:
-    return status.is_success(response.status_code)
+    """A success the envelope can carry: not a 205, which has no body to put it in."""
+    return (
+        status.is_success(response.status_code)
+        and response.status_code != status.HTTP_205_RESET_CONTENT
+    )
 
 
 def _speaks_json(request: Request) -> bool:

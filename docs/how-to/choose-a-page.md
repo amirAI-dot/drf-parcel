@@ -26,6 +26,13 @@ A cursor needs an ordering that does not change and is unique or nearly so -
 a creation time, an id. Name it on the view (`ordering`), on a subclass of the
 paginator, or with an `OrderingFilter`, which decides as DRF's does.
 
+A cursor is signed with the project's `SECRET_KEY` and carries its order: one
+changed by hand, or kept while the list was re-sorted with `?ordering=`, is
+`400 invalid_cursor`. **It is signed, not secret** - it can be decoded, and
+holds the ordering column's value for the row a page ends on. Order a feed by
+a value its readers may see. Rotate the key with `SECRET_KEY_FALLBACKS` to
+keep the cursors already given working.
+
 ## The size
 
 The size is read from the view, then the paginator, then
@@ -36,6 +43,9 @@ The size is read from the view, then the paginator, then
 class ProductViewSet(EnvelopeMixin, ModelViewSet):
     page_size = 12
 ```
+
+The ceiling is on what a client asks for; the view's own `page_size` is its
+developer's, and has none.
 
 ## Let the client choose it
 

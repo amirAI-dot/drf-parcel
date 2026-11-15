@@ -17,9 +17,15 @@ def report(exc, context):
 ```
 
 `context` is DRF's - the `view`, the `request`. The reporter is called with
-each 500 and never with a failure somebody designed: a 404, a wrong phone
-number or a `DomainError` is not a bug, and is not reported. A reporter that
-fails costs a log line, not the answer.
+each 5xx: a bug, and a 5xx raised on purpose too - a `ServiceUnavailableError`,
+an `APIException` with a status of 500 - because the server failing is
+worth hearing about either way. A 4xx is never reported: a 404, a wrong phone
+number or a `DomainError` is not the server failing. A reporter that fails
+costs a log line, not the answer.
+
+A 5xx raised on purpose says the message it was raised with, so that message
+must never be an exception's text: `raise ServiceUnavailableError()`, not
+`raise ServiceUnavailableError(str(error))`.
 
 !!! tip "Sentry's logging integration - one or the other"
 

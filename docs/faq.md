@@ -49,6 +49,14 @@ built as one - but the schema can only tell from the view. Give it
 Under `DEBUG`, so Django's error page shows the traceback. Set
 `DRF_PARCEL['RAISE_UNHANDLED_IN_DEBUG'] = False` to see the envelope instead.
 
+## Every cursor my clients hold became `invalid_cursor`
+
+A cursor is signed with `SECRET_KEY` since 0.2.0, so the cursors given by
+0.1.0 - unsigned - and those signed with a key since replaced are refused.
+A client that gets `invalid_cursor` reads the feed again from the start,
+without a cursor. To replace the key without this, put the old one in
+Django's `SECRET_KEY_FALLBACKS` until the cursors given with it are spent.
+
 ## Can I keep my old error codes?
 
 Yes - `ERROR_CODES` renames the library's own. See

@@ -7,7 +7,7 @@ the message. Each can be renamed with [`ERROR_CODES`](settings.md#failures).
 |---|---|---|---|
 | 400 | `validation_error` | a serializer, Django's `ValidationError`, `InvalidInputError` | `fields`: every problem, by the flat path of its field |
 | 400 | `parse_error` | a body that is not valid JSON | `{}` |
-| 400 | `invalid_cursor` | a cursor the server cannot read | `{}` |
+| 400 | `invalid_cursor` | a cursor the server cannot read, changed by hand, signed with another key, or made for another order | `{}` |
 | 401 | `not_authenticated` | no credentials sent. 403, as DRF answers it, when the view's first authentication class sends no `WWW-Authenticate` - session authentication | `{}` |
 | 401 | `authentication_failed` | wrong or expired credentials | `{}` |
 | 403 | `permission_denied` | DRF's or Django's `PermissionDenied`, with the sentence it was raised with | `{}` |
@@ -18,7 +18,7 @@ the message. Each can be renamed with [`ERROR_CODES`](settings.md#failures).
 | 409 | `conflict` | a foreign-key constraint, with `HANDLE_INTEGRITY_ERRORS`; `ConflictError` | `{}` |
 | 415 | `unsupported_media_type` | a body of a type the view does not read | `{}` |
 | 429 | `rate_limited` | throttling; `Retry-After` says the same | `retry_after`, in seconds |
-| 500 | `internal_error` | anything nobody designed | `{}` |
+| 500 | `internal_error` | anything nobody designed - and, like every 5xx, logged and reported | `{}` |
 | 503 | `service_unavailable` | `ServiceUnavailableError` | `{}` |
 
 A project's own error sends its own `default_code`, and the `data` it was
@@ -36,3 +36,8 @@ Each problem's `code` is DRF's or Django's own: `required`, `blank`, `null`,
 `invalid`, `max_length`, `min_length`, `max_value`, `min_value`, `unique`,
 `does_not_exist`, `incorrect_type`, `invalid_choice` and the rest - or the
 code a project's validator raised with.
+
+A path is the field names joined by `FIELD_PATH_SEPARATOR`. A `DictField`'s
+keys are the client's, so a key holding the separator - `"a.b"` - makes a path
+that reads like a nested field; choose another separator if a project's keys
+may hold a dot.

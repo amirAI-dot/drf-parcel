@@ -44,7 +44,7 @@ effect at once.
 | `ERROR_CODES` | `{}` | a [standard code](error-codes.md) renamed: `{'validation_error': 'validation_failed'}` |
 | `HANDLE_INTEGRITY_ERRORS` | `False` | answer a unique or foreign-key constraint with a 409 - [how-to](../how-to/database-constraints.md) |
 | `RAISE_UNHANDLED_IN_DEBUG` | `True` | under `DEBUG`, raise a bug for Django's error page instead of answering the 500 |
-| `REPORTER` | `None` | the dotted path to a function called as `report(exc, context)` with each 500 |
+| `REPORTER` | `None` | the dotted path to a function called as `report(exc, context)` with each 5xx |
 
 ### Messages
 

@@ -115,7 +115,14 @@ does every 204 the library answers, a view's bare one and
   check whose caller expects a shape of its own - its pages too, which are
   DRF's own `count`, `next`, `previous` and `results`;
 * a response already in the envelope - `success_response` returns one, and
-  it is not wrapped twice.
+  it is not wrapped twice;
+* a `205 Reset Content` - it tells the client to clear its form, and carries
+  no body by definition, so it is left as the view gave it.
+  `success_response(status_code=205)` is refused: there is no body to put
+  the envelope in.
+
+An `OPTIONS` answer - DRF's description of the view - is a success like any
+other, and in the envelope.
 
 ---
 
@@ -182,12 +189,21 @@ A page past the end is **404** (`not_found`), as DRF does.
 }
 ```
 
-A cursor is opaque: the client sends back what it was given and never
-builds one. There is no `count` and no `page` - not counting is the point of
-a cursor, on a table too large to count on every request. `has_next` is in
-both kinds, so a "load more" button works with either.
+The client sends back what it was given and never builds one. There is no
+`count` and no `page` - not counting is the point of a cursor, on a table too
+large to count on every request. `has_next` is in both kinds, so a "load
+more" button works with either.
 
-A cursor the server cannot read is **400** (`invalid_cursor`).
+**A cursor is signed** with the project's `SECRET_KEY`, and carries the order
+it was made for. One changed by hand, one made for another order - a list
+re-sorted with `?ordering=` - or one signed with another key is refused
+before the database is asked: **400** (`invalid_cursor`). So is one the
+server cannot read at all. Rotating the key with Django's
+`SECRET_KEY_FALLBACKS` keeps the cursors already given.
+
+**A cursor is signed, not secret.** It can be decoded, and it holds the
+value of the column the feed is ordered by, for the row a page ends on. Order
+a feed only by a value its readers may see - a creation time, an id.
 
 ### 2.3 The client choosing the page size
 
@@ -339,12 +355,16 @@ change: its `status_code`, its `default_code` as `error_code`, its
 
 An unexpected exception answers **500** with a generic sentence. Its text
 never leaves the server - it can hold a query, a file path, a person's
-name - and it is the only failure logged as an error, with its traceback.
-A 404 or a wrong phone number is not logged as an error at all.
+name. A 404 or a wrong phone number is not logged as an error at all.
+
+**Every 5xx answered is logged as an error and reported** - an unexpected
+exception, and a designed one too: an `APIException` raised with a status of
+500 or more, `ServiceUnavailableError`. A designed 5xx says the message it
+was raised with, so that message must never be an exception's text.
 
 * With `DEBUG = True` it is raised instead, so Django's error page shows
   the traceback (`RAISE_UNHANDLED_IN_DEBUG`).
-* `REPORTER` names a function called with each 500 - for Sentry or
+* `REPORTER` names a function called with each 5xx - for Sentry or
   anything like it.
 
 ### 3.5 Database integrity
@@ -540,3 +560,17 @@ What was asked before stage 1, and what the owner decided.
 5. ~~`handler404` and `handler500`: in the first release, or later?~~
    **Decided: neither.** What never reaches DRF is not this library's
    (3.7).
+
+Decided after 0.1.0, on what a security review found:
+
+6. **A cursor is signed** (2): one tampered with, or made for another order,
+   is refused before the database is asked, so a real bug while a feed is
+   read stays a bug - logged and reported. Signed, not encrypted: it is said
+   that a cursor can be decoded.
+7. **Every 5xx is logged and reported**, a designed one too (3.4).
+8. **A 205 is left as the view gave it** (1): it has no body to wrap.
+9. **`OPTIONS` is in the envelope** (1), like every other success.
+10. A view's own `page_size` has no ceiling: the ceiling is on what a client
+    asks for, and a view's size is its developer's. A key of a `DictField`
+    that holds the path separator makes an ambiguous path in `data.fields`;
+    `FIELD_PATH_SEPARATOR` changes the separator.

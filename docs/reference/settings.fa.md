@@ -44,7 +44,7 @@ DRF_PARCEL = {
 | `ERROR_CODES` | `{}` | تغییر اسم یک [کد استاندارد](error-codes.md): `{'validation_error': 'validation_failed'}` |
 | `HANDLE_INTEGRITY_ERRORS` | `False` | جواب دادن به قید unique یا foreign key با 409 - [راهنما](../how-to/database-constraints.md) |
 | `RAISE_UNHANDLED_IN_DEBUG` | `True` | در `DEBUG`، باگ را برای صفحه‌ی خطای Django بالا ببرد به جای جواب دادن با 500 |
-| `REPORTER` | `None` | مسیر تابعی که به شکل `report(exc, context)` با هر 500 صدا زده می‌شود |
+| `REPORTER` | `None` | مسیر تابعی که به شکل `report(exc, context)` با هر 5xx صدا زده می‌شود |
 
 ### پیام‌ها
 
