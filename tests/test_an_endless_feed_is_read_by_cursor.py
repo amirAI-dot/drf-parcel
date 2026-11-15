@@ -8,6 +8,7 @@ write a cursor by hand fills the error log with bugs that are not bugs.
 
 import logging
 from base64 import b64encode
+from typing import Any
 
 import pytest
 from rest_framework.test import APIClient
@@ -164,3 +165,55 @@ def test_the_order_is_the_paginators_when_the_view_names_none(
     make_items(5)
 
     assert names(client.get('/feed/oldest-first/').json()) == ['item-1', 'item-2']
+
+
+def test_a_cursor_changed_by_hand_is_refused(client: APIClient, make_items: MakeItems) -> None:
+    """A signed cursor with one character changed is not the cursor the server gave."""
+    make_items(5)
+    given = client.get('/feed/').json()['pagination']['next_cursor']
+    changed = given[:-1] + ('A' if given[-1] != 'A' else 'B')
+
+    response = client.get('/feed/', {'cursor': changed})
+
+    assert response.status_code == 400
+    assert response.json()['error_code'] == 'invalid_cursor'
+
+
+def test_a_cursor_signed_with_another_key_is_refused(
+    client: APIClient, make_items: MakeItems, settings: Any
+) -> None:
+    make_items(5)
+    given = client.get('/feed/').json()['pagination']['next_cursor']
+    settings.SECRET_KEY = 'a-key-the-cursor-was-not-signed-with'
+
+    assert client.get('/feed/', {'cursor': given}).json()['error_code'] == 'invalid_cursor'
+
+
+def test_a_key_rotated_with_fallbacks_keeps_the_cursors_given(
+    client: APIClient, make_items: MakeItems, settings: Any
+) -> None:
+    """Django's SECRET_KEY_FALLBACKS: a client paging through a feed is not cut off."""
+    make_items(5)
+    given = client.get('/feed/').json()['pagination']['next_cursor']
+    settings.SECRET_KEY_FALLBACKS = [settings.SECRET_KEY]
+    settings.SECRET_KEY = 'the-new-key'
+
+    assert names(client.get('/feed/', {'cursor': given}).json()) == ['item-3', 'item-2']
+
+
+def test_a_bug_while_a_feed_is_read_is_a_bug_cursor_or_not(
+    client: APIClient, make_items: MakeItems, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    A good cursor, and rows the project's own code cannot read: a 500, logged -
+    never mistaken for the client's cursor, which would hide the bug.
+    """
+    make_items(5)
+    given = client.get('/feed/').json()['pagination']['next_cursor']
+
+    with caplog.at_level(logging.ERROR, logger='drf_parcel'):
+        response = client.get('/feed/broken/', {'cursor': given})
+
+    assert response.status_code == 500
+    assert response.json()['error_code'] == 'internal_error'
+    assert [record for record in caplog.records if record.name == 'drf_parcel']

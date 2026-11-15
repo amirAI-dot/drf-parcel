@@ -11,6 +11,7 @@ router.register('named-rings', views.NamedRingViewSet, basename='named-ring')
 urlpatterns = [
     path('totals/', views.TotalsView.as_view()),
     path('explained/', views.ExplainedView.as_view()),
+    path('reset/', views.ResetView.as_view()),
     path('no-content/', views.NoContentView.as_view()),
     path('no-content/plain/', views.PlainNoContentView.as_view()),
     path('plain/', views.PlainView.as_view()),
@@ -27,6 +28,7 @@ urlpatterns = [
     path('items/plain/', shelf.PlainItemList.as_view()),
     path('feed/', shelf.Feed.as_view()),
     path('feed/oldest-first/', shelf.OldestFirstFeed.as_view()),
+    path('feed/broken/', shelf.BrokenFeed.as_view()),
     path('feed/by-number/', shelf.NumberedFeed.as_view()),
     path('feed/sortable/', shelf.SortableFeed.as_view()),
     path('items/opted-out/', shelf.OptedOutItemList.as_view()),

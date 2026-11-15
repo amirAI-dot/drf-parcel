@@ -4,7 +4,27 @@
 
 ## Unreleased
 
+Changed - what leaves the server is not what it was:
+
+* **A cursor is signed** with the project's `SECRET_KEY`, and carries the
+  order it was made for. One changed by hand, made for another order, or
+  signed with another key is `400 invalid_cursor` before the database is
+  asked. The cursors given by 0.1.0 are refused: a client reads the feed again
+  from the start. `SECRET_KEY_FALLBACKS` keeps cursors working across a key
+  change. A cursor is signed, not encrypted - the documents now say so.
+* **Every 5xx is logged and reported** - a designed one too: an
+  `APIException` raised with a status of 500 or more, `ServiceUnavailableError`.
+  It still says the message it was raised with.
+* **A 205 is left as the view gave it**: it has no body to put the envelope
+  in. `success_response(status_code=205)` is refused.
+
 Fixed:
+
+* **A bug while a feed is read is a bug again.** Telling a cursor the server
+  cannot use from a broken row had meant answering every `ValueError`,
+  `TypeError` or database error while a page was read as `invalid_cursor` -
+  which hid the project's own bugs, unlogged, on every page after the first.
+  A signed cursor is refused before the query, so nothing is caught around it.
 
 * **A cursor that decodes and still cannot be used is a 400
   `invalid_cursor`**, as the contract says of every cursor the server cannot
@@ -32,6 +52,9 @@ Fixed:
   start-up** (`drf_parcel.E011`): the paginators read those themselves.
 * The example's `restock` validates the quantity it is sent, and the guide to
   database constraints says when PostgreSQL checks a foreign key.
+* The contract says that `OPTIONS` is in the envelope, that a view's own
+  `page_size` has no ceiling, and that a `DictField` key holding the path
+  separator makes an ambiguous path.
 
 ## 0.1.0 - 2026-11-14 - the first release
 

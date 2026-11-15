@@ -91,6 +91,13 @@ class PlainNoContentView(APIView):
         return success_response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+class ResetView(EnvelopeMixin, APIView):
+    """A 205: the client is told to clear its form, and there is no body to wrap."""
+
+    def post(self, request: Request) -> Response:
+        return Response(status=status.HTTP_205_RESET_CONTENT)
+
+
 class ExplainedView(EnvelopeMixin, APIView):
     """Answers that carry a header, a cookie, a failure or a value that is not an object."""
 

@@ -1,5 +1,6 @@
 """Lists of items, paged each way a project pages them."""
 
+from django.db.models import QuerySet
 from rest_framework import generics, serializers
 from rest_framework.filters import OrderingFilter
 
@@ -105,3 +106,17 @@ class NoCeilingItemList(SizedItemList):
     """A view whose ceiling was set to nothing - a mistake, and no reason to read a table."""
 
     max_page_size = 0
+
+
+class RowsThatCannotBeReadQuerySet(QuerySet[Item]):
+    """Rows a project's own code cannot read - a custom field, say, that raises."""
+
+    def _fetch_all(self) -> None:
+        raise ValueError('A field the project wrote cannot read its column.')
+
+
+class BrokenFeed(Feed):
+    """The feed's own order, over rows that cannot be read: a bug of the project's."""
+
+    def get_queryset(self) -> QuerySet[Item]:
+        return RowsThatCannotBeReadQuerySet(model=Item)

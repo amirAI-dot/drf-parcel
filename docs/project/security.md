@@ -14,6 +14,12 @@ on the repository's Security tab - not in a public issue.
   its kind, never its text, a column's or a constraint's name.
 * **A client cannot read a whole table.** Every page size a client chooses
   has a ceiling, and none can be switched off.
+* **A cursor cannot be forged.** It is signed with the project's
+  `SECRET_KEY`; one changed by hand is refused before the database is asked.
+  It is signed, not encrypted: order a feed only by a value its readers may
+  see.
+* **The server failing is heard of.** Every 5xx - a bug, or one raised on
+  purpose - is logged and reported.
 
 ## What it does not do
 

@@ -13,7 +13,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from drf_parcel.exceptions import DomainError
+from drf_parcel.exceptions import DomainError, ServiceUnavailableError
 from drf_parcel.responses import EnvelopeMixin, error_response
 from tests.project.shelf.models import Item, Tag
 
@@ -22,6 +22,14 @@ class ProvinceInUseError(DomainError):
     status_code = status.HTTP_409_CONFLICT
     default_code = 'province_in_use'
     default_detail = _('This province has branches and cannot be deleted.')
+
+
+class UpstreamFailedError(exceptions.APIException):
+    """A 500 a project raises on purpose, with a sentence it chose."""
+
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    default_code = 'upstream_failed'
+    default_detail = 'The payment provider did not answer.'
 
 
 class LegacyError(exceptions.APIException):
@@ -87,6 +95,8 @@ FAILURES: dict[str, Any] = {
     'throttled': lambda: exceptions.Throttled(wait=12.7),
     'throttled-no-wait': exceptions.Throttled,
     'bug': raise_secret,
+    'designed-500': lambda: UpstreamFailedError(),
+    'designed-503': lambda: ServiceUnavailableError(),
     'write-then-fail': lambda: (
         Item.objects.create(name='half a write', created_at='2026-01-01T00:00:00Z'),
         ProvinceInUseError(),

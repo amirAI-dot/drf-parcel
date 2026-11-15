@@ -24,13 +24,12 @@ from collections.abc import Sequence
 from typing import Any, Final
 from urllib import parse
 
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import DataError
+from django.core import signing
 from django.db.models import QuerySet
 from rest_framework import pagination
-from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.utils.urls import replace_query_param
 from rest_framework.views import APIView
 
 from drf_parcel import conf
@@ -38,10 +37,9 @@ from drf_parcel.envelope import envelope_schema
 from drf_parcel.exceptions import InvalidCursorError
 from drf_parcel.responses import success_response
 
-#: What reading a page raises when a cursor's position is no value of the
-#: column the feed is ordered by - a number where a date is, a character the
-#: database refuses.
-_NOT_A_POSITION: Final = (ValueError, TypeError, DjangoValidationError, DataError)
+#: What a cursor is signed for. The version is in it, so a cursor of another
+#: shape - from another release - is refused by its signature, never misread.
+_CURSOR_SALT: Final = 'drf_parcel.pagination.cursor.v1'
 
 #: The schema of a numbered page's ``pagination``.
 PAGE_SCHEMA: Final[dict[str, Any]] = {
@@ -227,16 +225,19 @@ class CursorPagination(_PageSize, pagination.CursorPagination):
     """
     An endless feed: ``?cursor=...``.
 
-    A cursor is opaque - the client sends back what it was given. There is
-    no count and no page number: not counting is the point of a cursor, on a
-    table too large to count on every request.
+    The client sends back what it was given. There is no count and no page
+    number: not counting is the point of a cursor, on a table too large to
+    count on every request.
 
     The order is the view's ``ordering``, or the paginator's; an ordering
     filter on the view, when there is one, decides as DRF's does.
 
-    A cursor that decodes and still cannot be used - made by hand, or given
-    for another order than the one now asked for - is the same 400 as one
-    that cannot be read, never a bug.
+    A cursor is signed with the project's ``SECRET_KEY`` and carries the order
+    it was made for. One changed by hand, one made for another order, or one
+    that cannot be read is refused - 400 ``invalid_cursor`` - before the
+    database is asked; so whatever goes wrong while a page is read is a real
+    bug, and is answered and reported as one. Signed, not encrypted: a cursor
+    can be decoded, and holds the value the feed is ordered by.
     """
 
     def paginate_queryset(
@@ -245,21 +246,40 @@ class CursorPagination(_PageSize, pagination.CursorPagination):
         self.view = view
         self.page_size_query_param = self.client_page_size_param()
         self.ordering = getattr(view, 'ordering', None) or self.ordering
+        return super().paginate_queryset(queryset, request, view)
 
-        if request.query_params.get(self.cursor_query_param) is None:
-            return super().paginate_queryset(queryset, request, view)
-
-        try:
-            return super().paginate_queryset(queryset, request, view)
-        except _NOT_A_POSITION as unusable:
-            raise InvalidCursorError from unusable
+    def encode_cursor(self, cursor: pagination.Cursor) -> str:
+        """The link to a page: its cursor signed, with the order it was made for."""
+        assert self.base_url is not None
+        token = signing.dumps(
+            [cursor.offset, cursor.reverse, cursor.position, list(self.ordering)],
+            salt=_CURSOR_SALT,
+        )
+        link: str = replace_query_param(self.base_url, self.cursor_query_param, token)
+        return link
 
     def decode_cursor(self, request: Request) -> pagination.Cursor | None:
-        """A cursor that cannot be read is the client's mistake: 400, not DRF's 404."""
+        """
+        The cursor a client sent back - or 400 ``invalid_cursor``, before any query.
+
+        DRF has already settled the order asked for now, so a cursor made for
+        another one is told apart here: its rows would be read against a
+        column it holds no value of.
+        """
+        token = request.query_params.get(self.cursor_query_param)
+
+        if token is None:
+            return None
+
         try:
-            return super().decode_cursor(request)
-        except NotFound as unreadable:
-            raise InvalidCursorError from unreadable
+            offset, reverse, position, ordering = signing.loads(token, salt=_CURSOR_SALT)
+        except signing.BadSignature as refused:
+            raise InvalidCursorError from refused
+
+        if ordering != list(self.ordering):
+            raise InvalidCursorError
+
+        return pagination.Cursor(offset=offset, reverse=reverse, position=position)
 
     def get_paginated_response(self, data: Any) -> Response:
         if not self.wraps():
