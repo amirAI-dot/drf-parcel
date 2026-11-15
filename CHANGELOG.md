@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+## 0.2.0 - 2026-11-15
+
 Changed - what leaves the server is not what it was:
 
 * **A cursor is signed** with the project's `SECRET_KEY`, and carries the
