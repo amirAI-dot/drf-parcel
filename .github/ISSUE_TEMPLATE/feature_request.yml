@@ -1,0 +1,20 @@
+name: Feature request
+description: Something the library should do, or answer differently.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What a project or its clients cannot do today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+      description: If it changes what leaves the server, show the JSON before and after.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do now instead

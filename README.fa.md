@@ -1,5 +1,12 @@
 # drf-parcel
 
+[![PyPI](https://img.shields.io/pypi/v/drf-parcel)](https://pypi.org/project/drf-parcel/)
+[![Python](https://img.shields.io/pypi/pyversions/drf-parcel)](https://pypi.org/project/drf-parcel/)
+[![Django](https://img.shields.io/pypi/frameworkversions/django/drf-parcel?label=django)](https://pypi.org/project/drf-parcel/)
+[![CI](https://github.com/amirAI-dot/drf-parcel/actions/workflows/ci.yml/badge.svg)](https://github.com/amirAI-dot/drf-parcel/actions/workflows/ci.yml)
+[![Docs](https://github.com/amirAI-dot/drf-parcel/actions/workflows/docs.yml/badge.svg)](https://amirai-dot.github.io/drf-parcel/)
+[![License](https://img.shields.io/pypi/l/drf-parcel)](https://github.com/amirAI-dot/drf-parcel/blob/main/LICENSE)
+
 یک شکل پاسخ برای API ساخته‌شده با Django REST framework - برای پاسخ موفق،
 صفحه و خطا یکسان - و اسکیمایی که دقیقاً همان شکل را می‌گوید.
 
