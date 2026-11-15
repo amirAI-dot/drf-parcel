@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "drf-parcel"
-version = "0.1.0"
+version = "0.2.0"
 description = "One response shape for a Django REST framework API - success, page and error alike."
 readme = "README.md"
 license = "BSD-3-Clause"
