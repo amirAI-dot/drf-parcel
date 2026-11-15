@@ -99,6 +99,17 @@ def test_a_django_validation_error_of_no_field(client: APIClient) -> None:
     assert list(fields(answer)) == ['non_field_errors']
 
 
+def test_a_models_own_clean_is_under_non_field_errors_not_djangos_key(client: APIClient) -> None:
+    """Django files a model's clean() under '__all__', which no client looks under."""
+    answer = client.get('/fail/django-validation-model/').json()
+
+    assert answer['message'] == 'The dates are the wrong way round.'
+    assert fields(answer) == {
+        'non_field_errors': [{'code': 'invalid', 'message': 'The dates are the wrong way round.'}],
+        'phone': [{'code': 'invalid', 'message': 'Enter a valid phone number.'}],
+    }
+
+
 def test_a_validation_error_with_nothing_in_it_still_says_something(client: APIClient) -> None:
     answer = client.get('/fail/empty-validation/').json()
 

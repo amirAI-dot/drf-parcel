@@ -1,10 +1,15 @@
 """
 A feed is read by cursor: the client sends back what it was given.
 
-If these fail, "load more" repeats a row or skips one, or a client sending
-back a mangled cursor is told the list does not exist.
+If these fail, "load more" repeats a row or skips one, a client sending
+back a mangled cursor is told the list does not exist - or anybody who can
+write a cursor by hand fills the error log with bugs that are not bugs.
 """
 
+import logging
+from base64 import b64encode
+
+import pytest
 from rest_framework.test import APIClient
 
 from tests.conftest import MakeItems
@@ -82,6 +87,66 @@ def test_a_cursor_the_server_cannot_read_is_the_clients_mistake(
 
     assert response.status_code == 400
     assert response.json()['error_code'] == 'invalid_cursor'
+
+
+def by_hand(inside: str) -> str:
+    """A cursor nobody was given: well formed, saying whatever its writer liked."""
+    return b64encode(inside.encode()).decode()
+
+
+def test_a_cursor_whose_position_is_no_number_is_the_clients_mistake(
+    client: APIClient, make_items: MakeItems, caplog: pytest.LogCaptureFixture
+) -> None:
+    make_items(5)
+
+    response = client.get('/feed/by-number/', {'cursor': by_hand('p=abc')})
+
+    assert response.status_code == 400
+    assert response.json()['error_code'] == 'invalid_cursor'
+    assert not [record for record in caplog.records if record.levelno >= logging.ERROR]
+
+
+def test_a_cursor_whose_position_is_no_date_is_an_invalid_cursor_not_a_form(
+    client: APIClient, make_items: MakeItems
+) -> None:
+    make_items(5)
+
+    answer = client.get('/feed/', {'cursor': by_hand('p=abc')}).json()
+
+    assert answer['error_code'] == 'invalid_cursor'
+    assert answer['data'] == {}
+
+
+def test_a_cursor_kept_while_the_order_changes_is_refused_not_a_bug(
+    client: APIClient, make_items: MakeItems
+) -> None:
+    """A table re-sorted by another column, by a client that kept the old cursor."""
+    make_items(5)
+    given = client.get('/feed/sortable/').json()['pagination']['next_cursor']
+
+    response = client.get('/feed/sortable/', {'cursor': given, 'ordering': 'id'})
+
+    assert response.status_code == 400
+    assert response.json()['error_code'] == 'invalid_cursor'
+
+
+def test_a_cursor_holding_a_character_the_database_refuses_is_not_a_bug(
+    client: APIClient, make_items: MakeItems
+) -> None:
+    """PostgreSQL refuses a NUL in text; SQLite reads on. Neither is a 500."""
+    make_items(5)
+
+    response = client.get('/feed/sortable/', {'cursor': by_hand('p=a%00b'), 'ordering': 'name'})
+
+    assert response.status_code in (200, 400)
+
+
+def test_a_feed_asked_for_without_a_cursor_is_its_first_page(
+    client: APIClient, make_items: MakeItems
+) -> None:
+    make_items(5)
+
+    assert names(client.get('/feed/by-number/').json()) == ['item-5', 'item-4']
 
 
 def test_the_client_chooses_a_size_under_the_ceiling(

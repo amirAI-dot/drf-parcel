@@ -24,6 +24,8 @@ from collections.abc import Sequence
 from typing import Any, Final
 from urllib import parse
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import DataError
 from django.db.models import QuerySet
 from rest_framework import pagination
 from rest_framework.exceptions import NotFound
@@ -35,6 +37,11 @@ from drf_parcel import conf
 from drf_parcel.envelope import envelope_schema
 from drf_parcel.exceptions import InvalidCursorError
 from drf_parcel.responses import success_response
+
+#: What reading a page raises when a cursor's position is no value of the
+#: column the feed is ordered by - a number where a date is, a character the
+#: database refuses.
+_NOT_A_POSITION: Final = (ValueError, TypeError, DjangoValidationError, DataError)
 
 #: The schema of a numbered page's ``pagination``.
 PAGE_SCHEMA: Final[dict[str, Any]] = {
@@ -220,6 +227,10 @@ class CursorPagination(_PageSize, pagination.CursorPagination):
 
     The order is the view's ``ordering``, or the paginator's; an ordering
     filter on the view, when there is one, decides as DRF's does.
+
+    A cursor that decodes and still cannot be used - made by hand, or given
+    for another order than the one now asked for - is the same 400 as one
+    that cannot be read, never a bug.
     """
 
     def paginate_queryset(
@@ -228,7 +239,14 @@ class CursorPagination(_PageSize, pagination.CursorPagination):
         self.view = view
         self.page_size_query_param = self.client_page_size_param()
         self.ordering = getattr(view, 'ordering', None) or self.ordering
-        return super().paginate_queryset(queryset, request, view)
+
+        if request.query_params.get(self.cursor_query_param) is None:
+            return super().paginate_queryset(queryset, request, view)
+
+        try:
+            return super().paginate_queryset(queryset, request, view)
+        except _NOT_A_POSITION as unusable:
+            raise InvalidCursorError from unusable
 
     def decode_cursor(self, request: Request) -> pagination.Cursor | None:
         """A cursor that cannot be read is the client's mistake: 400, not DRF's 404."""

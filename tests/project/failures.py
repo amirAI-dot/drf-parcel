@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from drf_parcel.exceptions import DomainError
-from drf_parcel.responses import EnvelopeMixin
+from drf_parcel.responses import EnvelopeMixin, error_response
 from tests.project.shelf.models import Item, Tag
 
 
@@ -62,6 +62,13 @@ FAILURES: dict[str, Any] = {
         {'phone': [DjangoValidationError('Enter a valid phone number.', code='invalid')]}
     ),
     'django-validation-plain': lambda: DjangoValidationError('The dates are the wrong way round.'),
+    # What a model's full_clean() raises when its clean() refuses: Django's own key.
+    'django-validation-model': lambda: DjangoValidationError(
+        {
+            '__all__': [DjangoValidationError('The dates are the wrong way round.')],
+            'phone': [DjangoValidationError('Enter a valid phone number.', code='invalid')],
+        }
+    ),
     'empty-validation': lambda: exceptions.ValidationError({}),
     # The shape DRF before 3.18 gives a list of records: one entry per record, empty if valid.
     'list-validation': lambda: exceptions.ValidationError(
@@ -87,6 +94,18 @@ class FailingView(EnvelopeMixin, APIView):
             raise made
 
         return Response()
+
+
+class RefusedByHandView(EnvelopeMixin, APIView):
+    """POST writes, then answers a failure by returning it rather than raising it."""
+
+    def post(self, request: Request) -> Response:
+        Item.objects.create(name='half a write', created_at='2026-01-01T00:00:00Z')
+        return error_response(
+            message=_('This province has branches and cannot be deleted.'),
+            error_code='province_in_use',
+            status_code=status.HTTP_409_CONFLICT,
+        )
 
 
 class LineSerializer(serializers.Serializer[Any]):
